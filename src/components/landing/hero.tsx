@@ -20,14 +20,17 @@ export function Hero() {
           </p>
           
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="px-8 py-6 text-lg font-semibold">
+            <Button 
+              size="lg" 
+              className="px-8 py-6 text-lg font-semibold bg-primary-600 hover:bg-primary-700 text-white dark:bg-primary-600 dark:hover:bg-primary-700 dark:text-white transition-colors duration-200"
+            >
               Get Started for Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button 
               variant="outline" 
               size="lg" 
-              className="px-8 py-6 text-lg border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
+              className="px-8 py-6 text-lg font-medium border-2 border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-primary-500 dark:hover:border-primary-400 transition-all duration-200"
             >
               Watch Demo
             </Button>
