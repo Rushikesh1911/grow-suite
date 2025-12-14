@@ -103,7 +103,8 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen relative bg-transparent">
+      <div className="absolute inset-0 bg-white dark:bg-gray-950 -z-20" />
       <Header />
       <GridBackground />
       
