@@ -9,16 +9,16 @@ const Pricing = () => {
     {
       name: 'Starter',
       price: '₹0',
-      description: 'Perfect for individuals getting started',
-      buttonText: 'Get Started',
+      description: 'Perfect for individuals and small projects',
+      buttonText: 'Start Free',
       featured: false,
       features: [
         { name: 'Up to 5 projects', included: true },
         { name: 'Basic analytics', included: true },
-        { name: 'Email support', included: true },
-        { name: 'API Access', included: false },
+        { name: 'Community support', included: true },
+        { name: '1 team member', included: true },
+        { name: 'Limited API access', included: true },
         { name: 'Custom domains', included: false },
-        { name: 'Team members', included: false },
         { name: 'Advanced security', included: false },
         { name: 'Priority support', included: false },
       ],
@@ -26,34 +26,34 @@ const Pricing = () => {
     {
       name: 'Professional',
       price: '₹1,299',
-      description: 'For growing businesses and professionals',
+      description: 'Designed for growing freelancers & small agencies',
       buttonText: 'Start Free Trial',
       featured: true,
       features: [
         { name: 'Up to 20 projects', included: true },
         { name: 'Advanced analytics', included: true },
         { name: 'Priority email support', included: true },
-        { name: 'API Access', included: true },
+        { name: 'Full API Access', included: true },
         { name: 'Custom domains', included: true },
         { name: 'Up to 5 team members', included: true },
-        { name: 'Advanced security', included: false },
+        { name: 'Standard security', included: true },
         { name: 'Priority support', included: false },
       ],
     },
     {
       name: 'Enterprise',
       price: 'Custom',
-      description: 'For large organizations',
+      description: 'For large organizations with custom needs',
       buttonText: 'Contact Sales',
       featured: false,
       features: [
         { name: 'Unlimited projects', included: true },
         { name: 'Advanced analytics', included: true },
         { name: '24/7 Priority support', included: true },
-        { name: 'API Access', included: true },
+        { name: 'Unlimited API Access', included: true },
         { name: 'Custom domains', included: true },
         { name: 'Unlimited team members', included: true },
-        { name: 'Advanced security', included: true },
+        { name: 'Enterprise-grade security', included: true },
         { name: 'Dedicated account manager', included: true },
       ],
     },
@@ -124,14 +124,16 @@ const Pricing = () => {
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Features</h3>
               <div className="mt-8 space-y-6">
                 {features.map((feature) => (
-                  <div key={feature.name} className="pt-6">
+                  <div key={feature.name} className="pt-6 pb-6 border-b border-gray-100 dark:border-gray-800 last:border-0 last:pb-0">
                     <div className="flex items-center">
-                      <feature.icon className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mr-2" />
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 mr-3">
+                        <feature.icon className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
                         {feature.name}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p className="mt-2 ml-9 text-sm text-gray-500 dark:text-gray-400">
                       {feature.description}
                     </p>
                   </div>
@@ -172,8 +174,14 @@ const Pricing = () => {
                   "mt-4 text-4xl font-bold tracking-tight",
                   plan.featured ? "text-white" : "text-gray-900 dark:text-white"
                 )}>
-                  {plan.price}
-                  {plan.price !== 'Custom' && <span className="text-sm font-normal">/month</span>}
+                  {plan.price === 'Custom' ? (
+                    <span className="text-3xl font-extrabold">Custom</span>
+                  ) : (
+                    <>
+                      {plan.price}
+                      <span className="text-sm font-normal">/month</span>
+                    </>
+                  )}
                 </p>
                 <Button
                   variant={plan.featured ? "secondary" : "default"}
