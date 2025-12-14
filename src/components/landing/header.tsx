@@ -25,7 +25,10 @@ export function Header() {
         {/* Logo */}
         <div className="flex lg:flex-1">
           <a href="#" className="-m-1.5 p-1.5">
-            <span className="text-2xl font-bold text-primary">GrowSuite</span>
+            <div className="flex items-center">
+              
+              <span className="text-2xl font-bold tracking-tight text-[#4f46e5] dark:text-[#6366f1]">GROWSUITE</span>
+            </div>
           </a>
         </div>
 
