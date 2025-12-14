@@ -1,196 +1,152 @@
-import { useState, useEffect } from 'react';
-import { Sun, Moon, Menu, X } from 'lucide-react';
+import * as React from 'react';
+import { Menu, X, Moon, Sun } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const navigation = [
-  { name: 'Pricing', href: '#pricing' },
   { name: 'Features', href: '#features' },
-  {
-    name: 'Resources',
-    href: '#resources',
-    children: [
-      { name: 'Blog', href: '#' },
-      { name: 'Documentation', href: '#' },
-      { name: 'Guides', href: '#' },
-    ],
-  },
-  { name: 'Company', href: '#' },
+  { name: 'Pricing', href: '#pricing' },
+  { name: 'Testimonials', href: '#testimonials' },
+  { name: 'Resources', href: '/resources' },
 ];
 
-export const Header = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    // Initialize theme from localStorage or system preference
-    const savedTheme = localStorage.getItem('theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      setDarkMode(true);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-      setDarkMode(false);
-    }
-  }, []);
+export function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
 
   const toggleTheme = () => {
-    const newTheme = darkMode ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    setDarkMode(!darkMode);
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle('dark');
   };
 
   return (
-    <div className="fixed w-full z-50 px-4 pt-2">
-      <header 
-        className={`w-full transition-all duration-300 ${
-          scrolled 
-            ? 'backdrop-blur-md bg-white/80 dark:bg-gray-900/80 shadow-sm py-2 rounded-3xl' 
-            : 'py-4 rounded-3xl bg-white/80 dark:bg-gray-900/80'
-        }`}
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-lg dark:border-gray-800 dark:bg-gray-950/80">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
+        {/* Logo */}
+        <div className="flex lg:flex-1">
+          <a href="#" className="-m-1.5 p-1.5">
+            <span className="text-2xl font-bold text-primary">GrowSuite</span>
+          </a>
+        </div>
+
+        {/* Mobile menu button */}
+        <div className="flex lg:hidden">
+          <button
+            type="button"
+            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700 dark:text-gray-300"
+            onClick={() => setMobileMenuOpen(true)}
+          >
+            <span className="sr-only">Open main menu</span>
+            <Menu className="h-6 w-6" aria-hidden="true" />
+          </button>
+        </div>
+
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex lg:gap-x-12">
+          {navigation.map((item) => (
+            <a
+              key={item.name}
+              href={item.href}
+              className="text-sm font-medium leading-6 text-gray-900 transition-colors hover:text-primary dark:text-gray-100 dark:hover:text-primary"
+            >
+              {item.name}
+            </a>
+          ))}
+        </div>
+
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-4">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDarkMode ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </button>
+          <a
+            href="/login"
+            className="text-sm font-medium leading-6 text-gray-900 dark:text-gray-100 hover:text-primary transition-colors"
+          >
+            Log in <span aria-hidden="true">&rarr;</span>
+          </a>
+          <Button variant="gradient" className="rounded-full">
+            Get Started
+          </Button>
+        </div>
+      </nav>
+
+      {/* Mobile menu, show/hide based on menu open state. */}
+      <div
+        className={cn(
+          'lg:hidden',
+          mobileMenuOpen ? 'fixed inset-0 z-50' : 'hidden'
+        )}
+        role="dialog"
+        aria-modal="true"
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex-shrink-0">
-              <a href="#" className="flex items-center">
-                <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  GrowSuite
-                </span>
-              </a>
-            </div>
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <nav className="flex space-x-8">
+        <div className="fixed inset-0 bg-gray-900/50" aria-hidden="true" onClick={() => setMobileMenuOpen(false)} />
+        <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10 dark:bg-gray-900">
+          <div className="flex items-center justify-between">
+            <a href="#" className="-m-1.5 p-1.5">
+              <span className="text-2xl font-bold text-primary">GrowSuite</span>
+            </a>
+            <button
+              type="button"
+              className="-m-2.5 rounded-md p-2.5 text-gray-700 dark:text-gray-300"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span className="sr-only">Close menu</span>
+              <X className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </div>
+          <div className="mt-6 flow-root">
+            <div className="-my-6 divide-y divide-gray-500/10 dark:divide-gray-800">
+              <div className="space-y-2 py-6">
                 {navigation.map((item) => (
-                  <div key={item.name} className="relative group">
-                    <a
-                      href={item.href}
-                      className="text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-                    >
-                      {item.name}
-                    </a>
-                    {item.children && (
-                      <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                        {item.children.map((child) => (
-                          <a
-                            key={child.name}
-                            href={child.href}
-                            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            {child.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-medium leading-7 text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-800"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </a>
                 ))}
-              </nav>
-
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={toggleTheme}
-                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-                  aria-label="Toggle dark mode"
-                >
-                  {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-                </button>
-                
+              </div>
+              <div className="py-6">
                 <a
-                  href="#"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
+                  href="/login"
+                  className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-medium leading-7 text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-800"
                 >
                   Log in
                 </a>
-                
-                <a
-                  href="#"
-                  className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-indigo-500/25"
-                >
+                <Button variant="gradient" className="w-full mt-4">
                   Get Started
-                </a>
-              </div>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 mr-2"
-                aria-label="Toggle dark mode"
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-              
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="p-2 rounded-md text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none"
-                aria-expanded="false"
-              >
-                <span className="sr-only">Open main menu</span>
-                {isOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile menu */}
-      {isOpen && (
-        <div className="md:hidden bg-white/95 dark:bg-gray-900/95 backdrop-blur-md shadow-lg mx-4 rounded-b-3xl overflow-hidden">
-          <div className="px-4 pt-2 pb-4 space-y-1">
-            {navigation.map((item) => (
-              <div key={item.name}>
-                <a
-                  href={item.href}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                </Button>
+                <button
+                  onClick={toggleTheme}
+                  className="mt-4 flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-base font-medium text-gray-900 hover:bg-gray-50 dark:text-gray-100 dark:hover:bg-gray-800"
                 >
-                  {item.name}
-                </a>
-                {item.children && isOpen && (
-                  <div className="pl-4 space-y-1">
-                    {item.children.map((child) => (
-                      <a
-                        key={child.name}
-                        href={child.href}
-                        className="block px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
-                      >
-                        {child.name}
-                      </a>
-                    ))}
-                  </div>
-                )}
+                  {isDarkMode ? (
+                    <>
+                      <Sun className="h-5 w-5" />
+                      Switch to Light Mode
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="h-5 w-5" />
+                      Switch to Dark Mode
+                    </>
+                  )}
+                </button>
               </div>
-            ))}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <a
-                href="#"
-                className="block w-full text-center px-4 py-2 text-base font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md"
-              >
-                Log in
-              </a>
-              <a
-                href="#"
-                className="block w-full text-center mt-2 px-4 py-2 text-base font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-md hover:from-indigo-700 hover:to-purple-700"
-              >
-                Get Started
-              </a>
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    </header>
   );
-};
-
-export default Header;
+}
