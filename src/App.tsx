@@ -10,6 +10,8 @@ import Login from './pages/auth/login';
 import Signup from './pages/auth/signup';
 import TermsOfService from './pages/legal/terms';
 import PrivacyPolicy from './pages/legal/privacy';
+import ForgotPassword from './pages/auth/forgot-password';
+import ResetPassword from './pages/auth/reset-password';
 
 function App() {
   return (
@@ -28,8 +30,8 @@ function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<div>Forgot Password</div>} />
-            <Route path="/reset-password" element={<div>Reset Password</div>} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password"  element={<ResetPassword />} />
           </Route>
           
           {/* Protected routes can be added here */}
