@@ -49,6 +49,15 @@ export function AuthLayout() {
         
         <div className="lg:p-8">
           <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+            {/* Logo */}
+            <div className="flex justify-center mb-2">
+              <a href="/" className="-m-1.5 p-1.5">
+                <span className="text-2xl font-bold tracking-tighter text-[#4f46e5] dark:text-[#6366f1]">
+                  GROWSUITE
+                </span>
+              </a>
+            </div>
+            
             <div className="flex flex-col space-y-2 text-center">
               <h1 className="text-2xl font-semibold tracking-tight">
                 {isForgotPassword ? 'Reset your password' : isResetPassword ? 'Set a new password' : 'Welcome to GrowSuite'}
