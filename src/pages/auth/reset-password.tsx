@@ -4,7 +4,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('');
@@ -12,6 +12,8 @@ export default function ResetPassword() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -125,28 +127,56 @@ export default function ResetPassword() {
           
           <div className="space-y-2">
             <Label htmlFor="password">New Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              disabled={isLoading}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-11"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                disabled={isLoading}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-11 pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              disabled={isLoading}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="h-11"
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                disabled={isLoading}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="h-11 pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           
           <Button type="submit" className="w-full" disabled={isLoading}>
