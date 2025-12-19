@@ -1,7 +1,7 @@
 import * as React from "react"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 4000 // 4 seconds
 
 type ToasterToast = {
   id: string
@@ -134,7 +134,7 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, 'id'>
 
-function toast({ ...props }: Toast) {
+export const toast = ({ duration = TOAST_REMOVE_DELAY, ...props }: Toast & { duration?: number }) => {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -142,13 +142,28 @@ function toast({ ...props }: Toast) {
       type: "UPDATE_TOAST",
       toast: { ...props, id },
     })
+    
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
+  
+  // Clear any existing timeout for this toast
+  if (toastTimeouts.has(id)) {
+    clearTimeout(toastTimeouts.get(id))
+    toastTimeouts.delete(id)
+  }
+
+  // Set new timeout
+  const timeout = setTimeout(() => {
+    dismiss()
+  }, duration)
+  
+  toastTimeouts.set(id, timeout)
 
   dispatch({
     type: "ADD_TOAST",
     toast: {
       ...props,
       id,
+      duration,
       open: true,
       onOpenChange: (open: boolean) => {
         if (!open) dismiss()
@@ -157,7 +172,7 @@ function toast({ ...props }: Toast) {
   })
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
   }
@@ -183,4 +198,5 @@ function useToast() {
   }
 }
 
-export { useToast, toast }
+export { useToast}
+export default toast
