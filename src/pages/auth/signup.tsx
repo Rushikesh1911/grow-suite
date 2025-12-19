@@ -2,40 +2,49 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthForm } from '@/components/auth/auth-form';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signup, loginWithGoogle } = useAuth();
 
   const handleSubmit = async (data: { email: string; password: string; name?: string }) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // In a real app, you would make an API call here
-      // const response = await fetch('/api/auth/signup', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data),
-      // });
-      // const result = await response.json();
-      // if (!response.ok) throw new Error(result.message || 'Signup failed');
-      
-      // On success
+      await signup(data.email, data.password);
       toast({
-        title: 'Account created!',
-        description: 'Your account has been created successfully.',
+        title: 'Account created',
+        description: 'Your account has been created successfully! Please log in.',
       });
-      
-      // Redirect to verification or dashboard
+      // Redirect to login page after signup
+      navigate('/login');
+    } catch (error: any) {
+      console.error('Signup failed:', error);
+      setError(error.message || 'Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+await loginWithGoogle();
+      toast({
+        title: 'Account created',
+        description: 'Your account has been created successfully with Google!',
+      });
+      // Redirect to onboarding after Google signup
       navigate('/onboarding');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during signup');
+    } catch (error: any) {
+      console.error('Google signup failed:', error);
+      setError(error.message || 'Failed to sign up with Google.');
     } finally {
       setIsLoading(false);
     }
