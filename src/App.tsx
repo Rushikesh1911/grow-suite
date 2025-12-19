@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { AuthLayout } from './components/auth/auth-layout';
+import { ProtectedRoute } from './components/auth/protected-route';
 import { Toaster } from '@/components/ui/toaster';
 
 // Pages
@@ -8,6 +9,7 @@ import Landing from './pages/Landing';
 import Pricing from './pages/Pricing';
 import Login from './pages/auth/login';
 import Signup from './pages/auth/signup';
+import Onboarding from './pages/onboarding';
 import TermsOfService from './pages/legal/terms';
 import PrivacyPolicy from './pages/legal/privacy';
 import ForgotPassword from './pages/auth/forgot-password';
@@ -34,13 +36,15 @@ function App() {
             <Route path="/reset-password"  element={<ResetPassword />} />
           </Route>
           
-          {/* Protected routes can be added here */}
-          {/* 
+          {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
+            <Route path="/onboarding" element={<Onboarding />} />
+            {/* Add other protected routes here */}
+            {/* 
             <Route path="/dashboard" element={<Dashboard />} />
             ... other protected routes
+            */}
           </Route>
-          */}
           
           {/* 404 route */}
           <Route path="*" element={<Navigate to="/" replace />} />
