@@ -1,8 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { AuthLayout } from './components/auth/auth-layout';
 import { ProtectedRoute } from './components/auth/protected-route';
 import { Toaster } from '@/components/ui/toaster';
+
+// Layouts
+import { DashboardLayout } from './components/dashboard/dashboard-layout';
 
 // Pages
 import Landing from './pages/Landing';
@@ -14,6 +17,7 @@ import TermsOfService from './pages/legal/terms';
 import PrivacyPolicy from './pages/legal/privacy';
 import ForgotPassword from './pages/auth/forgot-password';
 import ResetPassword from './pages/auth/reset-password';
+import DashboardPage from './pages/dashboard';
 
 function App() {
   return (
@@ -39,11 +43,22 @@ function App() {
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/onboarding" element={<Onboarding />} />
-            {/* Add other protected routes here */}
-            {/* 
-            <Route path="/dashboard" element={<Dashboard />} />
-            ... other protected routes
-            */}
+            
+            {/* Dashboard layout with nested routes */}
+            <Route
+              element={
+                <DashboardLayout>
+                  <Outlet />
+                </DashboardLayout>
+              }
+            >
+              <Route path="/dashboard" element={<DashboardPage />} />
+              {/* Add more dashboard routes here */}
+              {/* 
+              <Route path="/dashboard/analytics" element={<AnalyticsPage />} />
+              <Route path="/dashboard/settings" element={<SettingsPage />} />
+              */}
+            </Route>
           </Route>
           
           {/* 404 route */}

@@ -1,5 +1,57 @@
 // src/components/landing/footer.tsx
-import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, Github } from 'lucide-react';
+
+const socialLinks = [
+  {
+    name: 'Facebook',
+    icon: Facebook,
+    url: 'https://facebook.com',
+    color: 'hover:bg-[#1877F2]',
+    iconColor: 'group-hover:text-white',
+    bgColor: 'bg-[#1877F2]/10'
+  },
+  {
+    name: 'X (Twitter)',
+    icon: Twitter,
+    url: 'https://x.com',
+    color: 'hover:bg-black dark:hover:bg-white',
+    iconColor: 'group-hover:text-white dark:group-hover:text-black',
+    bgColor: 'bg-black/5 dark:bg-white/10'
+  },
+  {
+    name: 'Instagram',
+    icon: Instagram,
+    url: 'https://instagram.com',
+    color: 'hover:bg-gradient-to-br from-[#F09433] via-[#E6683C] via-25% to-[#DC2743] to-50%',
+    iconColor: 'group-hover:text-white',
+    bgColor: 'bg-gradient-to-br from-[#F09433]/10 via-[#E6683C]/10 via-25% to-[#DC2743]/10 to-50%',
+    hoverStyle: 'hover:scale-105 hover:shadow-lg hover:shadow-pink-500/20'
+  },
+  {
+    name: 'LinkedIn',
+    icon: Linkedin,
+    url: 'https://linkedin.com',
+    color: 'hover:bg-[#0077B5]',
+    iconColor: 'group-hover:text-white',
+    bgColor: 'bg-[#0077B5]/10'
+  },
+  {
+    name: 'YouTube',
+    icon: Youtube,
+    url: 'https://youtube.com',
+    color: 'hover:bg-[#FF0000]',
+    iconColor: 'group-hover:text-white',
+    bgColor: 'bg-[#FF0000]/10'
+  },
+  {
+    name: 'GitHub',
+    icon: Github,
+    url: 'https://github.com',
+    color: 'hover:bg-[#333]',
+    iconColor: 'group-hover:text-white',
+    bgColor: 'bg-gray-200 dark:bg-gray-700/50'
+  }
+];
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -76,19 +128,22 @@ export function Footer() {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             &copy; {currentYear} GrowSuite. All rights reserved.
           </p>
-          <div className="mt-4 md:mt-0 flex space-x-6">
-            <a href="#" className="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-white">
-              <Facebook className="h-5 w-5" />
-            </a>
-            <a href="#" className="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-white">
-              <Twitter className="h-5 w-5" />
-            </a>
-            <a href="#" className="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-white">
-              <Instagram className="h-5 w-5" />
-            </a>
-            <a href="#" className="text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-white">
-              <Linkedin className="h-5 w-5" />
-            </a>
+          <div className="mt-4 md:mt-0 flex space-x-3">
+            {socialLinks.map((social) => {
+              const Icon = social.icon;
+              return (
+                <a
+                  key={social.name}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`group p-2 rounded-full transition-all duration-300 ${social.bgColor} ${social.color} ${social.hoverStyle || 'hover:shadow-lg'}`}
+                  aria-label={`Visit our ${social.name}`}
+                >
+                  <Icon className={`h-5 w-5 text-gray-700 dark:text-gray-300 ${social.iconColor} transition-colors duration-300`} />
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>
