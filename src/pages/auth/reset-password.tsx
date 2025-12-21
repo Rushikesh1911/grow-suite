@@ -17,7 +17,6 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const token = searchParams.get('token');
   const email = searchParams.get('email');
 
   const handleSubmit = async (e: React.FormEvent) => {

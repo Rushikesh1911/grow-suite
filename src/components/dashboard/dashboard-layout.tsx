@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -39,7 +40,7 @@ const sidebarItems: SidebarItem[] = [
   },
 ];
 
-export function DashboardLayout() {
+export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
 
@@ -198,7 +199,7 @@ export function DashboardLayout() {
         {/* Main content area */}
         <main className="flex-1 overflow-y-auto bg-gray-50 p-6 dark:bg-gray-950">
           <div className="mx-auto max-w-7xl">
-            <Outlet />
+            {children}
           </div>
         </main>
       </div>

@@ -1,6 +1,6 @@
 import { Header } from '@/components/landing/header';
 import { GridBackground } from '@/components/ui/grid-background';
-import { Check, X, Zap, Users, Briefcase, Clock, Globe, Lock, MessageSquare, BarChart2, Settings, ZapOff } from 'lucide-react';
+import { Check, X, Zap, Users, Briefcase,  Globe, Lock, MessageSquare, BarChart2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from "@/lib/utils";
 

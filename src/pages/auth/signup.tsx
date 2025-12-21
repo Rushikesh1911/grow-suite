@@ -9,7 +9,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signup, loginWithGoogle } = useAuth();
+  const { signup } = useAuth();
 
   const handleSubmit = async (data: { email: string; password: string; name?: string }) => {
     setIsLoading(true);
@@ -31,24 +31,24 @@ export default function SignupPage() {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-await loginWithGoogle();
-      toast({
-        title: 'Account created',
-        description: 'Your account has been created successfully with Google!',
-      });
-      // Redirect to onboarding after Google signup
-      navigate('/onboarding');
-    } catch (error: any) {
-      console.error('Google signup failed:', error);
-      setError(error.message || 'Failed to sign up with Google.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+//   const handleGoogleSignup = async () => {
+//     try {
+//       setIsLoading(true);
+//       setError(null);
+// await loginWithGoogle();
+//       toast({
+//         title: 'Account created',
+//         description: 'Your account has been created successfully with Google!',
+//       });
+//       // Redirect to onboarding after Google signup
+//       navigate('/onboarding');
+//     } catch (error: any) {
+//       console.error('Google signup failed:', error);
+//       setError(error.message || 'Failed to sign up with Google.');
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
 
   return (
     <div className="flex flex-col space-y-2 text-center">

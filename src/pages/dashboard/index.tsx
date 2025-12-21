@@ -1,10 +1,28 @@
-import { BarChart, TrendingUp, Users, DollarSign, Clock, CheckCircle, XCircle, FileText, Calendar, MessageSquare, PieChart, ArrowUpRight, ArrowDownRight, CalendarDays, CircleDollarSign, Clock3, Zap, ChevronRight } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  CheckCircle,
+  FileText,
+  MessageSquare,
+  ArrowUpRight,
+  ArrowDownRight,
+  CalendarDays,
+  CircleDollarSign,
+  Clock3,
+  Zap,
+  ChevronRight,
+} from 'lucide-react';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+
 
 // Mock data
 const stats = [
@@ -270,7 +288,4 @@ export default function DashboardPage() {
   );
 }
 
-// Utility function for conditional class names
-function cn(...classes: (string | undefined)[]) {
-  return classes.filter(Boolean).join(' ');
-}
+

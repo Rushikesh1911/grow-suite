@@ -7,7 +7,8 @@ type ToasterToast = {
   id: string
   title?: string
   description?: string
-  variant?: "default" | "destructive"
+  variant?: "default" | "success" | "warning" | "error" | "info"
+  duration?: number
 }
 
 const actionTypes = {
@@ -158,18 +159,14 @@ export const toast = ({ duration = TOAST_REMOVE_DELAY, ...props }: Toast & { dur
   
   toastTimeouts.set(id, timeout)
 
-  dispatch({
-    type: "ADD_TOAST",
-    toast: {
-      ...props,
-      id,
-      duration,
-      open: true,
-      onOpenChange: (open: boolean) => {
-        if (!open) dismiss()
-      },
-    },
-  })
+ dispatch({
+  type: "ADD_TOAST",
+  toast: {
+    ...props,
+    id,
+    duration,
+  },
+})
 
   return {
     id,
