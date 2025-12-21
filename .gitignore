@@ -11,9 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
-# Firebase config
-src/config/firebase.ts
-firebase.ts
+.env
 
 # Editor directories and files
 .vscode/*
