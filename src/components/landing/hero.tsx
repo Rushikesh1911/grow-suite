@@ -65,7 +65,7 @@ export function Hero() {
           >
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-200 dark:border-gray-800">
               <img
-                src="/public/hero-image-temp.png"
+                src="/hero-image-temp.png"
                 alt="Dashboard Preview"
                 className="w-full h-auto"
                 loading="eager"
