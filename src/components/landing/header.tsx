@@ -27,8 +27,12 @@ export function Header() {
       <header className="fixed inset-x-0 top-0 z-50 border-b border-gray-100 bg-white/80 backdrop-blur-lg dark:border-gray-800 dark:bg-gray-950/80">
         <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
           {/* Logo */}
-          <a href="/" className="text-2xl font-bold tracking-tighter text-[#4f46e5] dark:text-[#6366f1]">
-            GROWSUITE
+          <a href="/" className="flex items-center">
+            <img 
+              src="/growsuite-logo.png" 
+              alt="GrowSuite" 
+              className="h-8 w-auto"
+            />
           </a>
 
           {/* Desktop nav */}
@@ -101,10 +105,14 @@ export function Header() {
           <div className="flex items-center justify-between mb-8">
             <a 
               href="/" 
-              className="text-xl font-bold text-[#4f46e5] dark:text-[#6366f1]"
+              className="flex items-center"
               onClick={() => setMobileMenuOpen(false)}
             >
-              GROWSUITE
+              <img 
+                src="/growsuite-logo.png" 
+                alt="GrowSuite" 
+                className="h-7 w-auto"
+              />
             </a>
             <button 
               onClick={() => setMobileMenuOpen(false)}

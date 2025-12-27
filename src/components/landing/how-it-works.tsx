@@ -88,7 +88,7 @@ export function HowItWorks() {
             whileTap={{ scale: 0.98 }}
             className="relative inline-flex items-center justify-center px-8 py-4 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 transition-colors duration-200 group"
           >
-            Get Started with GrowSuite
+          Start managing clients smarter
             <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
           </motion.button>
           <p className="mt-4 text-sm text-muted-foreground">
