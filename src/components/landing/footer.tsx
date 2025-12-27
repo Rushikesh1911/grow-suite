@@ -64,7 +64,7 @@ export function Footer() {
             <img 
               src="/growsuite-logo.png" 
               alt="GrowSuite" 
-              className="h-14 w-auto"
+              className="h-16 w-auto"
             />
           </a>
         </div>
