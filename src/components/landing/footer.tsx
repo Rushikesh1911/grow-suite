@@ -60,10 +60,12 @@ export function Footer() {
     <footer className="border-t border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-950/50 backdrop-blur-lg">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="flex justify-center mb-12">
-          <a href="/" className="-m-1.5 p-1.5">
-            <span className="text-2xl font-bold tracking-tighter text-[#4f46e5] dark:text-[#6366f1]">
-              GROWSUITE
-            </span>
+          <a href="/" className="flex items-center">
+            <img 
+              src="/growsuite-logo.png" 
+              alt="GrowSuite" 
+              className="h-14 w-auto"
+            />
           </a>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
