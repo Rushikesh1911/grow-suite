@@ -15,12 +15,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SettingsModal } from '@/components/settings/settings-modal';
 
 type SidebarItem = {
   name: string;
   href: string;
   icon: React.ReactNode;
   children?: SidebarItem[];
+  type?: 'header';
 };
 
 const sidebarItems = [
@@ -87,6 +89,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -241,11 +244,18 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                       <span>Profile</span>
                     </button>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings" className="w-full cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </Link>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setIsSettingsOpen(true);
+                      const dropdownTrigger = document.querySelector('[data-radix-popper-content-wrapper]');
+                      if (dropdownTrigger) {
+                        (dropdownTrigger as HTMLElement).style.display = 'none';
+                      }
+                    }}
+                    className="w-full cursor-pointer"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400">
@@ -258,6 +268,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </aside>
+
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
 
       {/* Main content */}
       <div className="flex flex-1 flex-col lg:pl-64">
