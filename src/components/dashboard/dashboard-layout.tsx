@@ -96,9 +96,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       >
         <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4 dark:border-gray-800">
           <Link to="/dashboard" className="flex items-center">
-            <span className="text-xl font-bold text-[#4f46e5] dark:text-[#6366f1]">
-              GROWSUITE
-            </span>
+            <img 
+              src="/growsuite-logo.png" 
+              alt="GrowSuite" 
+              className="h-10 w-auto" 
+            />
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -220,16 +222,34 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex flex-1 flex-col lg:pl-64">
         {/* Top navigation */}
         <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:gap-x-6 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <span className="sr-only">Open sidebar</span>
-            <Menu className="h-6 w-6" aria-hidden="true" />
-          </button>
+          <div className="flex items-center">
+            <button
+              type="button"
+              className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <span className="sr-only">Open sidebar</span>
+              <Menu className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </div>
 
-          <div className="flex flex-1 justify-end gap-x-4 self-stretch lg:gap-x-6">
+          {/* Search bar */}
+          <div className="flex flex-1 px-4 lg:px-6">
+            <div className="relative w-full max-w-2xl">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                className="block w-full rounded-md border-0 bg-white py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#4f46e5] focus:ring-offset-1 dark:bg-gray-800 dark:text-white dark:ring-gray-700 dark:placeholder-gray-500 dark:focus:ring-[#6366f1] sm:text-sm sm:leading-6"
+                placeholder="Search..."
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-x-4 lg:gap-x-6">
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <button
                 type="button"
@@ -246,23 +266,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <HelpCircle className="h-6 w-6" aria-hidden="true" />
               </button>
 
-              {/* Profile dropdown */}
-              <div className="relative">
-                <button
-                  type="button"
-                  className="-m-1.5 flex items-center p-1.5"
-                  id="user-menu-button"
-                  aria-expanded="false"
-                  aria-haspopup="true"
-                >
-                  <span className="sr-only">Open user menu</span>
-                  <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                  <span className="ml-2 hidden text-sm font-medium text-gray-700 dark:text-gray-200 lg:block">
-                    John Doe
-                  </span>
-                  <ChevronDown className="ml-1 h-4 w-4 text-gray-400" />
-                </button>
-              </div>
             </div>
           </div>
         </header>
