@@ -1,9 +1,19 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown, User, LogOut, ChevronsUpDown } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type SidebarItem = {
   name: string;
@@ -43,10 +53,25 @@ const sidebarItems: SidebarItem[] = [
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
-
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+  
   const toggleSubmenu = (name: string) => {
     setActiveSubmenu(activeSubmenu === name ? null : name);
   };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out:', error);
+    }
+  };
+
+  const userDisplayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
+  const userEmail = currentUser?.email || '';
+  const userInitial = userDisplayName.charAt(0).toUpperCase();
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-950">
@@ -131,16 +156,51 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
         <div className="absolute bottom-0 w-full border-t border-gray-200 p-4 dark:border-gray-800">
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">John Doe</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Admin</p>
-              </div>
+            <div className="flex items-center gap-3">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-9 w-full items-center justify-between px-2">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={currentUser?.photoURL || ''} alt={userDisplayName} />
+                        <AvatarFallback>{userInitial}</AvatarFallback>
+                      </Avatar>
+                      <div className="hidden flex-col md:flex">
+                        <span className="text-sm font-medium">{userDisplayName}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{userEmail}</span>
+                      </div>
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{userDisplayName}</p>
+                      <p className="text-xs leading-none text-gray-500">{userEmail}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="w-full cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="w-full cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <Button variant="ghost" size="icon">
-              <Settings className="h-5 w-5" />
-            </Button>
           </div>
         </div>
       </aside>
