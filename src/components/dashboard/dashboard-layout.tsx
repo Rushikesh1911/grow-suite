@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown, User, LogOut, ChevronsUpDown } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown, User, LogOut, ChevronsUpDown, ListTodo, Clock, CreditCard, LayoutGrid, Folder } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { ProfileSettings } from '@/components/profile/profile-settings';
 import { Button } from '@/components/ui/button';
@@ -23,32 +23,64 @@ type SidebarItem = {
   children?: SidebarItem[];
 };
 
-const sidebarItems: SidebarItem[] = [
+const sidebarItems = [
+  {
+    name: 'WORK',
+    type: 'header'
+  },
   {
     name: 'Dashboard',
     href: '/dashboard',
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
   {
-    name: 'Projects',
-    href: '/projects',
-    icon: <FileText className="h-5 w-5" />,
-  },
-  {
-    name: 'Team',
-    href: '/team',
+    name: 'Clients',
+    href: '/clients',
     icon: <Users className="h-5 w-5" />,
   },
   {
-    name: 'Analytics',
-    href: '/analytics',
-    icon: <BarChart className="h-5 w-5" />,
+    name: 'Projects',
+    href: '/projects',
+    icon: <Folder className="h-5 w-5" />,
   },
   {
-    name: 'Settings',
-    href: '/settings',
-    icon: <Settings className="h-5 w-5" />,
+    name: 'Tasks',
+    href: '/tasks',
+    icon: <ListTodo className="h-5 w-5" />,
   },
+  {
+    name: 'Workspace',
+    href: '/workspace',
+    icon: <LayoutGrid className="h-5 w-5" />,
+  },
+  {
+    name: 'TIME & MONEY',
+    type: 'header'
+  },
+  {
+    name: 'Time Tracking',
+    href: '/time-tracking',
+    icon: <Clock className="h-5 w-5" />,
+  },
+  {
+    name: 'Invoices',
+    href: '/invoices',
+    icon: <FileText className="h-5 w-5" />,
+  },
+  {
+    name: 'Payments',
+    href: '/payments',
+    icon: <CreditCard className="h-5 w-5" />,
+  },
+  {
+    name: 'INSIGHTS',
+    type: 'header'
+  },
+  {
+    name: 'Reports',
+    href: '/reports',
+    icon: <BarChart className="h-5 w-5" />,
+  }
 ];
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -57,7 +89,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  
+
   const toggleSubmenu = (name: string) => {
     setActiveSubmenu(activeSubmenu === name ? null : name);
   };
@@ -89,17 +121,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 transform bg-white dark:bg-gray-900 transition-transform duration-300 ease-in-out lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-64 transform flex-col bg-white dark:bg-gray-900 transition-transform duration-300 ease-in-out lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
           'border-r border-gray-200 dark:border-gray-800'
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4 dark:border-gray-800">
           <Link to="/dashboard" className="flex items-center">
-            <img 
-              src="/growsuite-logo.png" 
-              alt="GrowSuite" 
-              className="h-10 w-auto" 
+            <img
+              src="/growsuite-logo.png"
+              alt="GrowSuite"
+              className="h-10 w-auto"
             />
           </Link>
           <button
@@ -110,55 +142,64 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        <nav className="mt-6 px-2">
+        <nav className="flex-1 overflow-y-auto px-2 py-4">
           <div className="space-y-1">
             {sidebarItems.map((item) => (
               <div key={item.name}>
-                <Link
-                  to={item.href}
-                  onClick={() => item.children && toggleSubmenu(item.name)}
-                  className={cn(
-                    'group flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium',
-                    'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
-                    'dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white',
-                    'transition-colors duration-200',
-                    'justify-between'
-                  )}
-                >
-                  <div className="flex items-center">
-                    <span className="mr-3 text-gray-500 group-hover:text-gray-600 dark:text-gray-400 dark:group-hover:text-gray-300">
-                      {item.icon}
-                    </span>
+                {item.type === 'header' ? (
+                  <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
                     {item.name}
                   </div>
-                  {item.children && (
-                    <ChevronDown
+                ) : (
+                  <>
+                    <Link
+                      to={item.href}
+                      onClick={() => item.children && toggleSubmenu(item.name)}
                       className={cn(
-                        'h-4 w-4 transform transition-transform',
-                        activeSubmenu === item.name && 'rotate-180'
+                        'group flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium',
+                        'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
+                        'dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white',
+                        'transition-colors duration-200',
+                        'justify-start gap-3',
+                        'mb-1'
                       )}
-                    />
-                  )}
-                </Link>
-                {item.children && activeSubmenu === item.name && (
-                  <div className="mt-1 space-y-1 pl-11">
-                    {item.children.map((subItem) => (
-                      <Link
-                        key={subItem.name}
-                        to={subItem.href}
-                        className="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                      >
-                        {subItem.name}
-                      </Link>
-                    ))}
-                  </div>
+                    >
+                      <div className="flex items-center">
+                        <span className="mr-3 text-gray-500 group-hover:text-gray-600 dark:text-gray-400 dark:group-hover:text-gray-300">
+                          {item.icon}
+                        </span>
+                        {item.name}
+                      </div>
+                      {item.children && (
+                        <ChevronDown
+                          className={cn(
+                            'h-4 w-4 transform transition-transform',
+                            activeSubmenu === item.name && 'rotate-180'
+                          )}
+                        />
+                      )}
+                    </Link>
+                    {item.children && activeSubmenu === item.name && (
+                      <div className="mt-1 space-y-1 pl-11">
+                        {item.children.map((subItem) => (
+                          <Link
+                            key={subItem.name}
+                            to={subItem.href}
+                            className="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                          >
+                            {subItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ))}
           </div>
         </nav>
 
-        <div className="absolute bottom-0 w-full border-t border-gray-200 p-4 dark:border-gray-800">
+        <div className="mt-auto border-t border-gray-200 p-4 dark:border-gray-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <DropdownMenu>
@@ -186,14 +227,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <button 
+                    <button
                       onClick={() => {
                         setIsProfileOpen(true);
                         const dropdownTrigger = document.querySelector('[data-radix-popper-content-wrapper]');
                         if (dropdownTrigger) {
                           (dropdownTrigger as HTMLElement).style.display = 'none';
                         }
-                      }} 
+                      }}
                       className="flex w-full items-center"
                     >
                       <User className="mr-2 h-4 w-4" />
@@ -278,9 +319,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         </main>
       </div>
 
-      <ProfileSettings 
-        isOpen={isProfileOpen} 
-        onClose={() => setIsProfileOpen(false)} 
+      <ProfileSettings
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
       />
     </div>
   );
