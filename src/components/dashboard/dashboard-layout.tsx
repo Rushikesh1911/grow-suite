@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown, User, LogOut, ChevronsUpDown } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { ProfileSettings } from '@/components/profile/profile-settings';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -53,6 +54,7 @@ const sidebarItems: SidebarItem[] = [
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   
@@ -182,10 +184,19 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/profile" className="w-full cursor-pointer">
+                    <button 
+                      onClick={() => {
+                        setIsProfileOpen(true);
+                        const dropdownTrigger = document.querySelector('[data-radix-popper-content-wrapper]');
+                        if (dropdownTrigger) {
+                          (dropdownTrigger as HTMLElement).style.display = 'none';
+                        }
+                      }} 
+                      className="flex w-full items-center"
+                    >
                       <User className="mr-2 h-4 w-4" />
                       <span>Profile</span>
-                    </Link>
+                    </button>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/settings" className="w-full cursor-pointer">
@@ -263,6 +274,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </main>
       </div>
+
+      <ProfileSettings 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+      />
     </div>
   );
 }
