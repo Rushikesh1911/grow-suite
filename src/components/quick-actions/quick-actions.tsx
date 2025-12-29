@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
+import { CreateClientModal } from '@/components/clients/create-client-modal';
 
 type ActionItem = {
   id: string;
@@ -23,7 +24,16 @@ type ActionItem = {
 
 export function QuickActions() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCreateClientModalOpen, setIsCreateClientModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  const handleCreateClient = (clientData: any) => {
+    // Here you would typically make an API call to create the client
+    console.log('Creating client:', clientData);
+    // Show success message
+    // You might want to use a toast notification here
+    alert('Client created successfully!');
+  };
 
   const actionGroups = [
     {
@@ -35,7 +45,7 @@ export function QuickActions() {
           label: 'New Client',
           icon: <User className="h-4 w-4" />,
           shortcut: '⌘+C',
-          onClick: () => navigate('/clients/new'),
+          onClick: () => setIsCreateClientModalOpen(true),
         },
         {
           id: 'new-project',
@@ -141,6 +151,13 @@ export function QuickActions() {
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Create Client Modal */}
+      <CreateClientModal 
+        isOpen={isCreateClientModalOpen}
+        onClose={() => setIsCreateClientModalOpen(false)}
+        onCreate={handleCreateClient}
+      />
     </div>
   );
 }
