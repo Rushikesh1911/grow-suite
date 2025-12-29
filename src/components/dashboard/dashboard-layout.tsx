@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown, User, LogOut, ChevronsUpDown, ListTodo, Clock, CreditCard, LayoutGrid, Folder } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown, User, LogOut, ChevronsUpDown, ListTodo, Clock, CreditCard, LayoutGrid, Folder, Plus } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { ProfileSettings } from '@/components/profile/profile-settings';
+import { QuickActions } from '@/components/quick-actions/quick-actions';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -92,6 +94,24 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
+  // Helper to get filled icon variant for active state
+  const getActiveIcon = (icon: React.ReactNode, isActive: boolean) => {
+    if (!isActive || !React.isValidElement(icon)) return icon;
+    
+    const iconName = icon.type.name;
+    const FilledIcon = LucideIcons[`${iconName} as any`];
+    
+    if (FilledIcon) {
+      return React.cloneElement(icon, { fill: 'currentColor' });
+    }
+    return icon;
+  };
 
   const toggleSubmenu = (name: string) => {
     setActiveSubmenu(activeSubmenu === name ? null : name);
@@ -160,16 +180,35 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                       onClick={() => item.children && toggleSubmenu(item.name)}
                       className={cn(
                         'group flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium',
-                        'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
-                        'dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white',
-                        'transition-colors duration-200',
-                        'justify-start gap-3',
-                        'mb-1'
+                        'transition-all duration-200 relative',
+                        'mb-1',
+                        // Base styles
+                        'text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+                        'dark:text-gray-300 dark:hover:bg-gray-800/50 dark:hover:text-white',
+                        // Active state
+                        isActive(item.href) ? [
+                          'bg-primary-50 text-primary-800 font-semibold',
+                          'dark:bg-primary-900/40 dark:text-primary-100',
+                          'before:absolute before:left-0 before:top-1/2 before:h-5 before:w-1',
+                          'before:-translate-y-1/2 before:rounded-r-full',
+                          'before:bg-primary-500 before:transition-all before:duration-200',
+                          'hover:pl-4',
+                        ] : 'pl-4',
+                        // Hover effect
+                        'hover:translate-x-1',
+                        // Icon transition
+                        '[&>div:first-child]:transition-transform [&>div:first-child]:duration-200',
+                        'hover:[&>div:first-child]:scale-110',
                       )}
                     >
                       <div className="flex items-center">
-                        <span className="mr-3 text-gray-500 group-hover:text-gray-600 dark:text-gray-400 dark:group-hover:text-gray-300">
-                          {item.icon}
+                        <span className={cn(
+                          'mr-3',
+                          isActive(item.href) 
+                            ? 'text-primary-600 dark:text-primary-300' 
+                            : 'text-gray-500 group-hover:text-gray-600 dark:text-gray-400 dark:group-hover:text-gray-300'
+                        )}>
+                          {getActiveIcon(item.icon, isActive(item.href))}
                         </span>
                         {item.name}
                       </div>
@@ -188,7 +227,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                           <Link
                             key={subItem.name}
                             to={subItem.href}
-                            className="block rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                            className={cn(
+                              'block rounded-md px-3 py-2 text-sm font-medium transition-colors duration-200',
+                              isActive(subItem.href) 
+                                ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-200 font-medium' 
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/50 dark:hover:text-gray-200'
+                            )}
                           >
                             {subItem.name}
                           </Link>
@@ -306,15 +350,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-x-4 lg:gap-x-6">
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
+          <div className="flex items-center justify-end gap-x-2 lg:gap-x-4">
+            <div className="flex items-center gap-x-2 lg:gap-x-4">
               <button
                 type="button"
-                className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-300"
+                className="p-2 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-300 relative"
               >
                 <span className="sr-only">View notifications</span>
-                <Bell className="h-6 w-6" aria-hidden="true" />
+                <Bell className="h-5 w-5" aria-hidden="true" />
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">3</span>
               </button>
+              <QuickActions />
               <button
                 type="button"
                 className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-300"
