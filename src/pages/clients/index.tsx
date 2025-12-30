@@ -28,7 +28,7 @@ const ClientsPage = () => {
 
   return (
     <div className="px-6 pb-6">
-      <div className="sticky top-0 bg-background z-10 -mx-6 px-6 pt-2 pb-1">
+      <div className="sticky top-0 bg-background z-10 -mx-6 px-6 pt-2 pb-1 border-b border-gray-100 dark:border-gray-800">
         <ClientsHeader
           onOpenCreateModal={() => setIsCreateModalOpen(true)}
           onFilterChange={handleFilterChange}
