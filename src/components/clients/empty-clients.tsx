@@ -10,7 +10,7 @@ export function EmptyClients({ onAddClient }: EmptyClientsProps) {
     <div className="flex flex-col items-center justify-start pt-2 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
-          <div className="w-52 h-60 relative">
+          <div className="w-56 h-64 relative">
             <img 
               src="/empty-client.svg" 
               alt="No clients" 
@@ -22,6 +22,9 @@ export function EmptyClients({ onAddClient }: EmptyClientsProps) {
           <h2 className="mt-6 text-2xl font-bold text-foreground">No clients yet</h2>
           <p className="mt-2 text-muted-foreground">
             Get started by adding your first client to the system.
+          </p>
+          <p className="text-sm text-muted-foreground/80 mt-1">
+            You can add clients manually or import them later
           </p>
           <div className="mt-6">
             <Button onClick={onAddClient} className="inline-flex items-center">
