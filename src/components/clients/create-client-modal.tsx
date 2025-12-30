@@ -8,10 +8,7 @@ import {
   MessageSquare,
   Globe,
   DollarSign,
-  FileText,
-  CheckCircle,
   AlertCircle,
-  Clock,
   Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
