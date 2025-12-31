@@ -28,6 +28,7 @@ export interface ClientData {
   email: string;
   phone?: string | null;
   status: ClientStatus;
+  preferredContactMethod?: 'email' | 'whatsapp' | 'call';
   address?: ClientAddress | null;
   contacts?: ClientContact[] | null;
   notes?: string | null;

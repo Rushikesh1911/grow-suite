@@ -1,25 +1,36 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback , useEffect } from 'react';
 import { ClientsHeader } from '@/components/clients/clients-header';
 import { EmptyClients } from '@/components/clients/empty-clients';
 import { CreateClientModal } from '@/components/clients/create-client-modal';
 import { ClientCard } from '@/components/clients/client-card';
+import { ClientBoardView } from '@/components/clients/client-board-view';
+import { DisplayToggle } from '@/components/ui/display-toggle';
 import { useClients } from '@/hooks/useClients';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { clientService } from '@/lib/client';
+
+type DisplayType = 'list' | 'board';
 
 const ClientsPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFavorites, setShowFavorites] = useState(false);
+  const [displayType, setDisplayType] = useState<DisplayType>('list');
   const { clients, loading, error, loadClients, toggleFavorite } = useClients();
   const [isMenuOpen, setIsMenuOpen] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Set default view based on number of clients
+  const getDefaultViewType = (clients: any[]): DisplayType => {
+    return clients.length > 5 ? 'board' : 'list';
+  };
+
+  // Update display type when clients change
+  useEffect(() => {
+    if (clients.length > 0) {
+      setDisplayType(getDefaultViewType(clients));
+    }
+  }, [clients.length]);
 
   const handleCreateClient = async (clientData: any) => {
     try {
@@ -147,38 +158,54 @@ const ClientsPage = () => {
       </div>
 
       <div className="mt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-medium">
+            {filteredClients.length} {filteredClients.length === 1 ? 'client' : 'clients'}
+          </h2>
+          <DisplayToggle 
+            displayType={displayType}
+            onDisplayTypeChange={setDisplayType}
+          />
+        </div>
+
         {filteredClients.length === 0 ? (
           <EmptyClients onAddClient={() => setIsCreateModalOpen(true)} />
+        ) : displayType === 'board' ? (
+          <ClientBoardView
+            clients={filteredClients}
+            onFavoriteToggle={handleFavoriteToggle}
+            onAction={handleClientAction}
+          />
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="bg-card rounded-lg border overflow-hidden">
             {filteredClients.map((client) => (
-              <div key={client.id} className="relative">
+              <div key={client.id} className="relative border-b last:border-b-0 hover:bg-muted/30 transition-colors">
                 <ClientCard
                   client={client}
                   onFavoriteToggle={handleFavoriteToggle}
                   onAction={handleClientAction}
                 />
                 {isMenuOpen === client.id && (
-                  <div className="absolute right-2 top-12 z-10 w-48 rounded-md bg-white dark:bg-gray-900 shadow-lg ring-1 ring-black ring-opacity-5">
+                  <div className="absolute right-2 top-12 z-10 w-48 rounded-md bg-popover shadow-lg ring-1 ring-muted-foreground/20">
                     <div className="py-1">
-                      <DropdownMenuItem
+                      <button
                         onClick={() => handleClientAction('view', client)}
-                        className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-muted"
                       >
                         View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
+                      </button>
+                      <button
                         onClick={() => handleClientAction('edit', client)}
-                        className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-muted"
                       >
                         Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
+                      </button>
+                      <button
                         onClick={() => handleClientAction('delete', client)}
-                        className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
+                        className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
                       >
                         Delete
-                      </DropdownMenuItem>
+                      </button>
                     </div>
                   </div>
                 )}
