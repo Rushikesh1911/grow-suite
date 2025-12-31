@@ -15,17 +15,20 @@ import {
 interface ClientsHeaderProps {
   onOpenCreateModal: () => void;
   onFilterChange: (filter: string) => void;
+  onStatusChange: (status: string) => void;
   onToggleFavorites: () => void;
   showFavorites: boolean;
+  currentStatus: string;
 }
 
 export function ClientsHeader({
   onOpenCreateModal,
   onFilterChange,
+  onStatusChange,
   onToggleFavorites,
   showFavorites,
+  currentStatus = 'all'
 }: ClientsHeaderProps) {
-  const [filter, setFilter] = useState('all');
 
   return (
     <div className="flex flex-col space-y-3 md:flex-row md:items-center md:justify-between py-1">
@@ -74,11 +77,12 @@ export function ClientsHeader({
           <DropdownMenuContent className="w-56">
             <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={filter} onValueChange={setFilter}>
+            <DropdownMenuRadioGroup value={currentStatus} onValueChange={onStatusChange}>
               <DropdownMenuRadioItem value="all">All Clients</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="active">Active</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="inactive">Inactive</DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="prospect">Prospects</DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="on-hold">On Hold</DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>

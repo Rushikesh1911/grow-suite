@@ -14,6 +14,7 @@ type DisplayType = 'list' | 'board';
 const ClientsPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [showFavorites, setShowFavorites] = useState(false);
   const [displayType, setDisplayType] = useState<DisplayType>('list');
   const { clients, loading, error, loadClients, toggleFavorite } = useClients();
@@ -115,13 +116,14 @@ const ClientsPage = () => {
     setIsMenuOpen(null);
   };
 
-  // Filter clients based on search query and favorites
+  // Filter clients based on search query, status, and favorites
   const filteredClients = clients.filter(client => {
     const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          client.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         client.email.toLowerCase().includes(searchQuery.toLowerCase());
+                         client.email?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
     const matchesFavorites = !showFavorites || client.isFavorite;
-    return matchesSearch && matchesFavorites;
+    return matchesSearch && matchesStatus && matchesFavorites;
   });
 
   if (loading && clients.length === 0) {
@@ -152,8 +154,10 @@ const ClientsPage = () => {
         <ClientsHeader
           onOpenCreateModal={() => setIsCreateModalOpen(true)}
           onFilterChange={handleFilterChange}
+          onStatusChange={setStatusFilter}
           onToggleFavorites={handleToggleFavorites}
           showFavorites={showFavorites}
+          currentStatus={statusFilter}
         />
       </div>
 
