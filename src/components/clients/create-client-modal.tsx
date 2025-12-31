@@ -9,12 +9,17 @@ import {
   Globe,
   DollarSign,
   AlertCircle,
-  Tag
+  Tag,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { useClients } from '@/hooks/useClients';
+// In create-client-modal.tsx
+import { toast } from '@/components/ui/toast';
+import { auth } from '@/config/firebase';
 
 interface CreateClientModalProps {
   isOpen: boolean;
@@ -124,8 +129,9 @@ const STATUS_OPTIONS = [
 ];
 
 export function CreateClientModal({ isOpen, onClose, onSave }: CreateClientModalProps) {
-  const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof ClientData, string>>>({});
+  const { createClient } = useClients();
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState<ClientData>({
     clientName: '',
@@ -162,31 +168,78 @@ export function CreateClientModal({ isOpen, onClose, onSave }: CreateClientModal
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
+      newErrors.email = 'Please enter a valid email address';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  };;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Add form validation back in
     if (!validateForm()) {
+      return;
+    }
+
+    // Check if user is authenticated
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      toast({
+        title: 'Authentication Required',
+        description: 'Please sign in to create a client',
+        variant: 'error'
+      });
       return;
     }
 
     setIsSaving(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Client data:', formData);
-      if (onSave) {
-        onSave(formData);
+    try {
+      // Create a clean client data object
+      const clientData = {
+        name: formData.clientName.trim(),
+        ...(formData.companyName && { company: formData.companyName.trim() }),
+        email: formData.email.trim(),
+        ...(formData.phone && { phone: formData.phone.trim() }),
+        status: formData.clientStatus as 'active' | 'inactive' | 'prospect',
+        ...(formData.internalNotes && { notes: formData.internalNotes.trim() }),
+        ...(formData.industry && { tags: [formData.industry] }),
+        isFavorite: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: currentUser.uid,
+      };
+
+      // Create the client
+      const clientId = await createClient(clientData);
+
+      if (clientId) {
+        toast({
+          title: 'Success',
+          description: 'Client created successfully',
+          variant: 'success'
+        });
+
+        if (onSave) {
+          onSave(formData);
+        }
+
+        handleClose();
+      } else {
+        throw new Error('Failed to create client');
       }
+    } catch (error) {
+      console.error('Error creating client:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to create client. Please try again.',
+        variant: 'error'
+      });
+    } finally {
       setIsSaving(false);
-      handleClose();
-    }, 1000);
+    }
   };
 
   const handleClose = () => {
@@ -606,32 +659,31 @@ export function CreateClientModal({ isOpen, onClose, onSave }: CreateClientModal
                 </div>
               </div>
             </div>
-          </form>
 
-          {/* Footer */}
-          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-800 dark:bg-gray-800/50">
-            <div className="flex justify-end space-x-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleClose}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                onClick={handleSubmit}
-                disabled={isSaving}
-                className="bg-primary-600 hover:bg-primary-700"
-              >
-                {isSaving && (
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                )}
-                {isSaving ? 'Creating...' : 'Create Client'}
-              </Button>
+            {/* Footer */}
+            <div className="mt-auto border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-800 dark:bg-gray-800/50">
+              <div className="flex justify-end space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClose}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Client'
+                  )}
+                </Button>
+              </div>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
