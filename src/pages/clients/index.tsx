@@ -1,4 +1,4 @@
-import { useState, useCallback , useEffect } from 'react';
+import { useState,  useEffect } from 'react';
 import { ClientsHeader } from '@/components/clients/clients-header';
 import { EmptyClients } from '@/components/clients/empty-clients';
 import { CreateClientModal } from '@/components/clients/create-client-modal';
