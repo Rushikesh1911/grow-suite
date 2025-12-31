@@ -80,15 +80,34 @@ const ClientsPage = () => {
   };
 
   const handleClientAction = async (action: string, client: any) => {
+    if (action === 'menu') {
+      // Toggle menu for the clicked client
+      setIsMenuOpen(prev => prev === client.id ? null : client.id);
+      return;
+    }
+
+    // Close any open menu
+    setIsMenuOpen(null);
+
     switch (action) {
       case 'view':
         // Navigate to client details page
         // router.push(`/clients/${client.id}`);
+        toast({
+          title: 'View Client',
+          description: `Viewing details for ${client.name}`,
+          variant: 'default'
+        });
         break;
       case 'edit':
         // Handle edit action
         // setEditingClient(client);
         // setIsEditModalOpen(true);
+        toast({
+          title: 'Edit Client',
+          description: `Editing ${client.name}`,
+          variant: 'default'
+        });
         break;
       case 'delete':
         if (window.confirm(`Are you sure you want to delete ${client.name}?`)) {
@@ -113,7 +132,6 @@ const ClientsPage = () => {
       default:
         break;
     }
-    setIsMenuOpen(null);
   };
 
   // Filter clients based on search query, status, and favorites
@@ -190,25 +208,38 @@ const ClientsPage = () => {
                   onAction={handleClientAction}
                 />
                 {isMenuOpen === client.id && (
-                  <div className="absolute right-2 top-12 z-10 w-48 rounded-md bg-popover shadow-lg ring-1 ring-muted-foreground/20">
-                    <div className="py-1">
+                  <div className="absolute right-2 bottom-14 z-50 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-800 dark:ring-white/10">
+                    <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                       <button
-                        onClick={() => handleClientAction('view', client)}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-muted"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClientAction('view', client);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700"
+                        role="menuitem"
                       >
                         View Details
                       </button>
                       <button
-                        onClick={() => handleClientAction('edit', client)}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-muted"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClientAction('edit', client);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-700"
+                        role="menuitem"
                       >
-                        Edit
+                        Edit Client
                       </button>
+                      <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                       <button
-                        onClick={() => handleClientAction('delete', client)}
-                        className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClientAction('delete', client);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+                        role="menuitem"
                       >
-                        Delete
+                        Delete Client
                       </button>
                     </div>
                   </div>

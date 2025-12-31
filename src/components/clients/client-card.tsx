@@ -168,22 +168,24 @@ export function ClientCard({ client, onFavoriteToggle, onAction, onClick }: Clie
       </div>
 
       {/* Actions Menu - Bottom Right */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={(e) => {
-          e.stopPropagation();
-          onAction('menu', client);
-        }}
-        className={cn(
-          "absolute bottom-4 right-4 h-8 w-8 opacity-0 transition-opacity duration-200",
-          "group-hover:opacity-100",
-          "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
-          "dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800"
-        )}
-      >
-        <MoreVertical className="h-4 w-4" />
-      </Button>
+      <div className="relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onAction('menu', client);
+          }}
+          className={cn(
+            "absolute bottom-4 right-4 h-8 w-8 opacity-0 transition-opacity duration-200",
+            "group-hover:opacity-100",
+            "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+            "dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800"
+          )}
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
