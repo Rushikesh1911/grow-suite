@@ -3,6 +3,7 @@ import { Star, MoreVertical, Mail, Phone, MessageSquare, Globe, DollarSign, Tren
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 interface ClientCardProps {
   client: ClientData;
@@ -62,130 +63,73 @@ export function ClientCard({ client, onFavoriteToggle, onAction, onClick }: Clie
   };
 
   return (
-    <div
-      className={cn(
-        "group relative rounded-xl border border-gray-200 bg-white p-5 transition-all duration-200",
-        "hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-0.5",
-        "dark:border-gray-800 dark:bg-gray-900 dark:hover:shadow-gray-950/50",
-        onClick && "cursor-pointer"
-      )}
-      onClick={() => onClick?.(client)}
-    >
-      {/* Favorite Star - Top Right */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onFavoriteToggle(client.id, !client.isFavorite);
-        }}
+    <Link to={`/clients/${client.id}`} className="block">
+      <div
         className={cn(
-          "absolute top-4 right-4 p-1.5 rounded-lg transition-all duration-200",
-          "hover:bg-gray-100 dark:hover:bg-gray-800",
-          client.isFavorite
-            ? "text-amber-500 hover:text-amber-600"
-            : "text-gray-300 hover:text-gray-400 dark:text-gray-600"
+          "group relative rounded-xl border border-gray-200 bg-white p-5 transition-all duration-200",
+          "hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-0.5",
+          "dark:border-gray-800 dark:bg-gray-900 dark:hover:shadow-gray-950/50",
+          onClick && "cursor-pointer"
         )}
       >
-        <Star className={cn("h-4 w-4", client.isFavorite && "fill-current")} />
-      </button>
-
-      {/* Main Content */}
-      <div className="flex items-start space-x-4 pr-8">
-        {/* Avatar */}
-        <div className="relative flex-shrink-0">
-          <Avatar className="h-12 w-12 border-2 border-white shadow-sm dark:border-gray-800">
-            <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-600 text-white font-semibold text-sm">
-              {getInitials(client.name)}
-            </AvatarFallback>
-          </Avatar>
-          {client.clientType === 'company' && (
-            <div className="absolute -bottom-1 -right-1 rounded-full bg-white p-0.5 shadow-sm dark:bg-gray-900">
-              <div className="rounded-full bg-gray-100 p-1 dark:bg-gray-800">
-                <Globe className="h-2.5 w-2.5 text-gray-600 dark:text-gray-400" />
-              </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className={cn("h-10 w-10 rounded-full flex items-center justify-center", status.bg)}>
+              <span className={cn("font-medium", status.text)}>{getInitials(client.name)}</span>
             </div>
-          )}
-        </div>
-
-        {/* Client Info */}
-        <div className="flex-1 min-w-0">
-          {/* Name & Company */}
-          <div className="mb-2">
-            <h3 className="font-semibold text-gray-900 dark:text-white truncate text-base mb-0.5">
-              {client.name}
-            </h3>
-            {client.company && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex items-center gap-1.5">
-                <Globe className="h-3 w-3 flex-shrink-0" />
-                {client.company}
+            <div>
+              <h3 className="font-medium text-gray-900 dark:text-white">{client.name}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                {getContactIcon()}
+                <span className="ml-1">{client.email}</span>
               </p>
-            )}
+            </div>
           </div>
-
-          {/* Status & Contact Method */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
+          
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onAction('menu', client);
+            }}
+            className={cn(
+              "h-8 w-8 rounded-full flex items-center justify-center",
+              "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+              "dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800"
+            )}
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </div>
+        
+        <div className="mt-4 flex items-center justify-between">
+          <div className={cn(
+            "px-2.5 py-1 rounded-full text-xs font-medium",
+            status.text,
+            status.bg,
+            status.border
+          )}>
+            {client.status.charAt(0).toUpperCase() + client.status.slice(1)}
+          </div>
+          
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onFavoriteToggle(client.id, !client.isFavorite);
+              }}
               className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border",
-                status.bg,
-                status.text,
-                status.border
+                "h-8 w-8 rounded-full flex items-center justify-center",
+                "text-gray-400 hover:text-amber-400",
+                client.isFavorite && "text-amber-400"
               )}
             >
-              <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
-              {client.status === 'on-hold' ? 'On Hold' : client.status.charAt(0).toUpperCase() + client.status.slice(1)}
-            </span>
-
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700">
-              {getContactIcon()}
-              {(client.preferredContactMethod || 'email').charAt(0).toUpperCase() + (client.preferredContactMethod || 'email').slice(1)}
-            </span>
-
-            {client.tags && client.tags.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700">
-                <TrendingUp className="h-3 w-3" />
-                {client.tags[0]}
-              </span>
-            )}
-          </div>
-
-       
-          <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-            {/* {client.email && (
-              <span className="inline-flex items-center gap-1.5 truncate max-w-[200px]">
-                <Mail className="h-3 w-3 flex-shrink-0" />
-                {client.email}
-              </span>
-            )} */}
-
-            {client.defaultHourlyRate && (
-              <span className="inline-flex items-center gap-1 flex-shrink-0">
-                <DollarSign className="h-3 w-3" />
-                {client.defaultCurrency} {client.defaultHourlyRate}/hr
-              </span>
-            )}
+              <Star className={cn("h-4 w-4", client.isFavorite && "fill-current")} />
+            </button>
           </div>
         </div>
       </div>
-
-      {/* Actions Menu - Bottom Right */}
-      <div className="relative">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAction('menu', client);
-          }}
-          className={cn(
-            "absolute bottom-4 right-4 h-8 w-8 opacity-0 transition-opacity duration-200",
-            "group-hover:opacity-100",
-            "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
-            "dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800"
-          )}
-        >
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+    </Link>
   );
 }

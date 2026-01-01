@@ -19,6 +19,7 @@ import ForgotPassword from './pages/auth/forgot-password';
 import ResetPassword from './pages/auth/reset-password';
 import DashboardPage from './pages/dashboard';
 import ClientsPage from './pages/clients';
+import ClientDetailPage from './pages/clients/[id]';
 
 function App() {
   return (
@@ -48,10 +49,11 @@ function App() {
             {/* Dashboard routes with layout */}
             <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
             <Route path="/clients" element={<AppLayout><ClientsPage /></AppLayout>} />
+            <Route path="/clients/:id" element={<AppLayout><ClientDetailPage /></AppLayout>} />
           </Route>
           
           {/* 404 route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/notfound" replace />} />
         </Routes>
         
         {/* Toast notifications */}
