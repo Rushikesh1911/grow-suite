@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors , closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
-import { SortableContext, arrayMove, useSortable } from '@dnd-kit/sortable';
+import { SortableContext, arrayMove, useSortable  } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
-import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList } from 'lucide-react';
+import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList, CalendarDays, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,21 +12,27 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
-type Task = {
+
+type Project = {
   id: string;
-  title: string;
+  name: string;
   description?: string;
   status: string;
   priority: 'low' | 'medium' | 'high';
-  dueDate?: string;
-  labels?: string[];
-  assignee?: {
-    name: string;
-    avatar?: string;
+  startDate: string;
+  dueDate: string;
+  progress: number;
+  tags?: string[];
+  team: {
+    members: Array<{
+      name: string;
+      role: string;
+      avatar?: string;
+    }>;
   };
-  comments?: number;
-  attachments?: number;
-  completed?: boolean;
+  budget?: number;
+  completedTasks?: number;
+  totalTasks?: number;
 };
 
 type Column = {
@@ -37,112 +43,142 @@ type Column = {
 };
 
 const COLUMNS: Column[] = [
-  { 
-    id: 'todo', 
-    title: 'To Do', 
+  {
+    id: 'planning',
+    title: 'Planning',
     color: 'bg-blue-500',
-    icon: <Circle className="h-3 w-3 text-blue-500" />
+    icon: <ClipboardList className="h-3 w-3 text-blue-500" />
   },
-  { 
-    id: 'in-progress', 
-    title: 'In Progress', 
+  {
+    id: 'in-progress',
+    title: 'In Progress',
     color: 'bg-yellow-500',
     icon: <div className="h-3 w-3 rounded-full bg-yellow-500 animate-pulse" />
   },
-  { 
-    id: 'in-review', 
-    title: 'In Review', 
+  {
+    id: 'review',
+    title: 'Review',
     color: 'bg-purple-500',
     icon: <AlertCircle className="h-3 w-3 text-purple-500" />
   },
-  { 
-    id: 'done', 
-    title: 'Done', 
+  {
+    id: 'completed',
+    title: 'Completed',
     color: 'bg-green-500',
     icon: <CheckCircle className="h-3 w-3 text-green-500" />
   },
 ];
 
-const LABEL_COLORS = {
-  design: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
-  development: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  bug: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  feature: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  enhancement: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+const TAG_COLORS = {
+  web: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  mobile: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  design: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+  marketing: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  research: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300',
+  development: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
 };
 
-const initialTasks: Task[] = [
+const initialProjects: Project[] = [
   {
     id: '1',
-    title: 'Redesign dashboard layout',
-    description: 'Update the dashboard with new components and improved UX',
+    name: 'E-commerce Platform',
+    description: 'Build a modern e-commerce platform with React and Node.js',
     status: 'in-progress',
     priority: 'high',
-    dueDate: '2024-01-10',
-    labels: ['design', 'enhancement'],
-    assignee: { name: 'Alex', avatar: '' },
-    comments: 3,
-    attachments: 2,
+    startDate: '2024-01-01',
+    dueDate: '2024-03-15',
+    progress: 65,
+    tags: ['web', 'development'],
+    team: {
+      members: [
+        { name: 'Alex', role: 'Frontend', avatar: '' },
+        { name: 'Jordan', role: 'Backend', avatar: '' },
+        { name: 'Taylor', role: 'Design', avatar: '' },
+      ]
+    },
+    budget: 25000,
+    completedTasks: 13,
+    totalTasks: 20,
   },
   {
     id: '2',
-    title: 'Implement user authentication',
-    description: 'Set up secure login with email/password and social providers',
-    status: 'todo',
-    priority: 'high',
-    dueDate: '2024-01-12',
-    labels: ['development', 'feature'],
-    assignee: { name: 'Jordan', avatar: '' },
+    name: 'Mobile App Redesign',
+    description: 'Redesign the mobile app with new UI/UX improvements',
+    status: 'planning',
+    priority: 'medium',
+    startDate: '2024-02-01',
+    dueDate: '2024-04-30',
+    progress: 15,
+    tags: ['mobile', 'design'],
+    team: {
+      members: [
+        { name: 'Casey', role: 'Design', avatar: '' },
+        { name: 'Riley', role: 'Mobile', avatar: '' },
+      ]
+    },
+    budget: 18000,
+    completedTasks: 3,
+    totalTasks: 25,
   },
-  // Temporarily removed to demonstrate empty state
-  // {
-  //   id: '3',
-  //   title: 'Fix responsive issues',
-  //   description: 'Address mobile layout problems on dashboard',
-  //   status: 'in-review',
-  //   priority: 'medium',
-  //   dueDate: '2024-01-08',
-  //   labels: ['bug', 'development'],
-  //   assignee: { name: 'Taylor', avatar: '' },
-  //   comments: 5,
-  // },
+  {
+    id: '3',
+    name: 'Marketing Website',
+    description: 'Develop a new marketing website to showcase our products',
+    status: 'review',
+    priority: 'high',
+    startDate: '2023-12-15',
+    dueDate: '2024-01-31',
+    progress: 90,
+    tags: ['web', 'marketing'],
+    team: {
+      members: [
+        { name: 'Morgan', role: 'Frontend', avatar: '' },
+        { name: 'Jamie', role: 'Content', avatar: '' },
+      ]
+    },
+    budget: 15000,
+    completedTasks: 18,
+    totalTasks: 20,
+  },
   {
     id: '4',
-    title: 'Add dark mode toggle',
-    description: 'Implement theme switching functionality',
-    status: 'done',
+    name: 'Customer Portal',
+    description: 'Build a self-service customer portal',
+    status: 'completed',
     priority: 'medium',
-    dueDate: '2024-01-05',
-    labels: ['feature', 'enhancement'],
-    completed: true,
-  },
-  {
-    id: '5',
-    title: 'Update documentation',
-    description: 'Document new API endpoints and components',
-    status: 'todo',
-    priority: 'low',
-    dueDate: '2024-01-15',
-    labels: ['documentation'],
+    startDate: '2023-11-01',
+    dueDate: '2023-12-31',
+    progress: 100,
+    tags: ['web', 'development'],
+    team: {
+      members: [
+        { name: 'Alex', role: 'Frontend', avatar: '' },
+        { name: 'Jordan', role: 'Backend', avatar: '' },
+        { name: 'Taylor', role: 'QA', avatar: '' },
+      ]
+    },
+    budget: 30000,
+    completedTasks: 45,
+    totalTasks: 45,
   },
 ];
 
 export function ModernKanbanBoard() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newProjectName, setNewProjectName] = useState('');
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
 
-  const tasksByStatus = useMemo(() => {
-    return tasks.reduce((acc, task) => {
-      if (!acc[task.status]) {
-        acc[task.status] = [];
+  const projectsByStatus = useMemo(() => {
+    return projects.reduce((acc, project) => {
+      if (!acc[project.status]) {
+        acc[project.status] = [];
       }
-      acc[task.status].push(task);
+      acc[project.status].push(project);
       return acc;
-    }, {} as Record<string, Task[]>);
-  }, [tasks]);
+    }, {} as Record<string, Project[]>);
+  }, [projects]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -152,99 +188,111 @@ export function ModernKanbanBoard() {
     })
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const task = tasks.find((t) => t.id === active.id);
-    if (task) {
-      setActiveTask(task);
-      setActiveId(active.id as string);
+  const onDragStart = (event: DragStartEvent) => {
+    if (event.active.data.current?.type === 'project') {
+      setActiveProject(event.active.data.current.project);
+      setActiveId(event.active.id);
     }
   };
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event;
-    if (!over) return;
-    
-    // Only update if we're over a different column
-    if (active.id !== over.id) {
-      setActiveColumn(over.id as string);
-    }
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
+  const onDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
 
-    setActiveTask(null);
-    setActiveColumn(null);
-    setActiveId(null);
+    const activeId = active.id;
+    const overId = over.id;
 
-    const activeTask = tasks.find((t) => t.id === active.id);
-    if (!activeTask) return;
+    if (activeId === overId) return;
 
-    // Check if we're dropping on a task or a column
-    const isOverTask = tasks.some(task => task.id === over.id);
-    
-    if (isOverTask) {
-      // If dropping on another task, find its column
-      const overTask = tasks.find(t => t.id === over.id);
-      if (!overTask) return;
-      
-      // Move to the same column as the task we're dropping on
-      if (activeTask.status !== overTask.status) {
-        setTasks(tasks.map(task => 
-          task.id === active.id 
-            ? { ...task, status: overTask.status } 
-            : task
-        ));
-      } else {
-        // Reorder within the same column
-        setTasks((items) => {
-          const oldIndex = items.findIndex((item) => item.id === active.id);
-          const newIndex = items.findIndex((item) => item.id === over.id);
-          
-          if (oldIndex !== newIndex) {
-            return arrayMove(items, oldIndex, newIndex);
-          }
-          return items;
-        });
-      }
-    } else {
-      // If dropping on a column (empty area)
-      const overColumn = COLUMNS.find(col => over.id.toString() === col.id);
-      if (!overColumn) return;
-      
-      // Move to the new column
-      if (activeTask.status !== overColumn.id) {
-        setTasks(tasks.map(task => 
-          task.id === active.id 
-            ? { ...task, status: overColumn.id } 
-            : task
-        ));
-      }
+    const isActiveAProject = active.data.current?.type === 'project';
+    const isOverAProject = over.data.current?.type === 'project';
+
+    if (!isActiveAProject) return;
+
+    // Dropping over a project
+    if (isOverAProject) {
+      setProjects((projects) => {
+        const activeIndex = projects.findIndex((p) => p.id === activeId);
+        const overIndex = projects.findIndex((p) => p.id === overId);
+
+        if (projects[activeIndex].status !== projects[overIndex].status) {
+          projects[activeIndex].status = projects[overIndex].status;
+          return arrayMove(projects, activeIndex, overIndex - 1);
+        }
+
+        return arrayMove(projects, activeIndex, overIndex);
+      });
+    }
+
+    // Dropping over a column
+    const isOverAColumn = over.data.current?.type === 'column';
+    if (isOverAColumn) {
+      setProjects((projects) => {
+        const activeIndex = projects.findIndex((p) => p.id === activeId);
+        projects[activeIndex].status = overId as string;
+        return arrayMove(projects, activeIndex, activeIndex);
+      });
     }
   };
 
-  const handleAddTask = (status: string) => {
-    if (!newTaskTitle.trim()) return;
+  const addProject = (status: string) => {
+    if (!newProjectName.trim()) return;
 
-    const newTask: Task = {
-      id: `task-${Date.now()}`,
-      title: newTaskTitle,
+    const newProject: Project = {
+      id: Math.random().toString(36).substr(2, 9),
+      name: newProjectName,
+      description: 'New project description',
       status,
       priority: 'medium',
+      startDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      progress: 0,
+      tags: ['development'],
+      team: {
+        members: []
+      },
+      completedTasks: 0,
+      totalTasks: 0,
     };
 
-    setTasks([...tasks, newTask]);
-    setNewTaskTitle('');
+    setProjects([...projects, newProject]);
+    setNewProjectName('');
+    setActiveColumn(null);
   };
 
-  const toggleTaskCompletion = (taskId: string) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, completed: !task.completed } 
-        : task
-    ));
+  const toggleProjectComplete = (projectId: string) => {
+    setProjects(prevProjects =>
+      prevProjects.map(project =>
+        project.id === projectId
+          ? {
+            ...project,
+            status: project.status === 'completed' ? 'planning' : 'completed',
+            completed: !project.completed
+          }
+          : project
+      )
+    );
+  };
+
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const activeId = active.id;
+    const overId = over.id;
+    if (activeId === overId) return;
+    // Find the project being dragged
+    const activeProject = projects.find(p => p.id === activeId);
+    if (!activeProject) return;
+    // Find the status of the column we're dropping into
+    const overStatus = over.data.current?.status || over.id;
+    // Only update if status changed
+    if (activeProject.status !== overStatus) {
+      setProjects(projects.map(project =>
+        project.id === activeId
+          ? { ...project, status: overStatus as Project['status'] }
+          : project
+      ));
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -260,101 +308,125 @@ export function ModernKanbanBoard() {
     }
   };
 
+  const renderAddProjectInput = (columnId: string) => {
+    if (activeColumn !== columnId) return null;
+
+    return (
+      <div className="mt-2">
+        <div className="flex space-x-2">
+          <Input
+            placeholder="Project name"
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                addProject(columnId);
+              } else if (e.key === 'Escape') {
+                setActiveColumn(null);
+                setNewProjectName('');
+              }
+            }}
+            className="flex-1"
+            autoFocus
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setActiveColumn(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="flex justify-end mt-2">
+          <Button
+            size="sm"
+            onClick={() => addProject(columnId)}
+            disabled={!newProjectName.trim()}
+          >
+            Add Project
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderEmptyState = (columnId: string) => {
+    if (projectsByStatus[columnId]?.length > 0) return null;
+
+    return (
+      <div className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-center">
+        <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-3">
+          <ClipboardList className="h-5 w-5 text-blue-500" />
+        </div>
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+          No projects here
+        </h4>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-2"
+          onClick={() => setActiveColumn(columnId)}
+        >
+          <Plus className="h-4 w-4 mr-1" /> Add project
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <div className="h-full w-full overflow-hidden">
       <DndContext
         sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
+        collisionDetection={closestCenter}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDragEnd={onDragEnd}
       >
-        <div className="flex h-full overflow-x-auto pb-6 scrollbar-hide">
-          <div className="flex space-x-4 px-4">
+        <div className="flex h-full overflow-x-auto pb-6 scrollbar-hide px-4">
+          <div className="flex space-x-6">
             {COLUMNS.map((column) => {
-              const columnTasks = tasksByStatus[column.id] || [];
+              const columnProjects = projectsByStatus[column.id] || [];
               return (
-                <div key={column.id} className="w-80 flex-shrink-0">
+                <div key={column.id} className="w-80 flex-shrink-0 flex flex-col">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
-                      {column.icon}
+                      <div className={`h-3 w-0.5 ${column.color}`} />
                       <h3 className="font-medium text-sm text-gray-700 dark:text-gray-300">
                         {column.title}
                       </h3>
                       <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-full px-2 py-0.5">
-                        {columnTasks.length}
+                        {columnProjects.length}
                       </span>
                     </div>
-                    <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+                      onClick={() => setActiveColumn(activeColumn === column.id ? null : column.id)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
                   </div>
 
-                  <div className="space-y-3">
-                    <motion.div 
-                      className="space-y-2"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className="flex space-x-2 group">
-                        <div className="relative flex-1">
-                          <Plus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                          <Input
-                            placeholder="Add a task..."
-                            className="h-9 pl-9 text-sm border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 hover:border-blue-200 dark:hover:border-gray-600 focus:border-blue-500 focus:border-solid transition-all"
-                            value={newTaskTitle}
-                            onChange={(e) => setNewTaskTitle(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                handleAddTask(column.id);
-                              }
-                            }}
-                          />
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddTask(column.id)}
-                          className="h-9 px-3 transition-all"
-                          variant="outline"
-                        >
-                          <Plus className="h-4 w-4 mr-1.5" />
-                          <span className="text-sm">Add</span>
-                        </Button>
-                      </div>
-                    </motion.div>
+                  <div className="flex-1 space-y-3 overflow-y-auto">
+                    {renderAddProjectInput(column.id)}
 
-                    <AnimatePresence>
-                      <SortableContext items={columnTasks.map((t) => t.id)}>
-                        <div className="space-y-3">
-                          {columnTasks.length > 0 ? (
-                            columnTasks.map((task) => (
-                              <TaskCard 
-                                key={task.id} 
-                                task={task} 
-                                onToggleComplete={toggleTaskCompletion}
-                              />
-                            ))
-                          ) : (
-                            <motion.div 
-                              className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-center"
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-3">
-                                <ClipboardList className="h-5 w-5 text-blue-500" />
-                              </div>
-                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                                No tasks yet
-                              </h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Drag tasks here or click "Add" to create one
-                              </p>
-                            </motion.div>
-                          )}
-                        </div>
-                      </SortableContext>
-                    </AnimatePresence>
+                    <SortableContext items={columnProjects.map((p) => p.id)}>
+                      <div className="space-y-3">
+                        {columnProjects.length > 0 ? (
+                          columnProjects.map((project) => (
+                            <ProjectCard
+                              key={project.id}
+                              project={project}
+                              onToggleComplete={toggleProjectComplete}
+                              isDragging={activeId === project.id}
+                            />
+                          ))
+                        ) : (
+                          renderEmptyState(column.id)
+                        )}
+                      </div>
+                    </SortableContext>
                   </div>
                 </div>
               );
@@ -364,46 +436,14 @@ export function ModernKanbanBoard() {
 
         {createPortal(
           <DragOverlay>
-            {activeTask && (
-              <motion.div 
-                className="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 w-72"
-                initial={{ scale: 0.95, opacity: 0.8 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.1 }}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-sm">{activeTask.title}</h4>
-                  <Badge className={getPriorityColor(activeTask.priority)}>
-                    {activeTask.priority}
-                  </Badge>
-                </div>
-                {activeTask.description && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    {activeTask.description}
-                  </p>
-                )}
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                  {activeTask.dueDate && (
-                    <div className="flex items-center">
-                      <Clock className="h-3 w-3 mr-1" />
-                      <span>{new Date(activeTask.dueDate).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                  {activeTask.assignee && (
-                    <div className="flex items-center">
-                      <Avatar className="h-5 w-5 mr-1">
-                        <AvatarImage src={activeTask.assignee.avatar} />
-                        <AvatarFallback>
-                          {activeTask.assignee.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+            {activeProject && (
+              <div className="w-80">
+                <ProjectCard
+                  project={activeProject}
+                  onToggleComplete={toggleProjectComplete}
+                  isDragging
+                />
+              </div>
             )}
           </DragOverlay>,
           document.body
@@ -413,84 +453,223 @@ export function ModernKanbanBoard() {
   );
 }
 
-const TaskCard = ({ 
-  task, 
-  onToggleComplete 
-}: { 
-  task: Task; 
+interface ProjectCardProps {
+  project: Project;
   onToggleComplete: (id: string) => void;
-}) => {
+  isDragging?: boolean;
+}
+const ProjectCard = ({
+  project,
+  onToggleComplete,
+  isDragging = false
+}: ProjectCardProps) => {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
     transition,
-    isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({
+    id: project.id,
+    data: {
+      type: 'project',
+      project,
+    },
+  });
 
   const style = {
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1 : 'auto',
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 50 : 0,
   };
 
+  const priorityColors = {
+    high: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+    medium: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+    low: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  };
+
+  const progress = project.progress || 0;
+  const progressColor = progress < 30 ? 'bg-red-500' :
+    progress < 70 ? 'bg-yellow-500' : 'bg-green-500';
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      style={style}
-    >
-      <Card className="group hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600 overflow-hidden">
-        <CardContent className="p-4">
-          <div className="flex items-start space-x-3">
-            <button 
-              onClick={() => onToggleComplete(task.id)}
+    <>
+      {/* PROJECT CARD */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+      >
+        <Card
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          className={cn(
+            'group relative overflow-hidden transition-all hover:shadow-md cursor-grab active:cursor-grabbing',
+            isDragging ? 'ring-2 ring-primary ring-opacity-50' : ''
+          )}
+        >
+          <CardHeader className="p-4 pb-2">
+            <div className="flex items-start justify-between">
+              <CardTitle
+                className={cn(
+                  'text-sm font-medium leading-tight transition-colors',
+                  project.status === 'completed'
+                    ? 'line-through text-muted-foreground'
+                    : ''
+                )}
+              >
+                {project.name}
+              </CardTitle>
+              <Badge
+                className={cn(
+                  'text-xs font-medium',
+                  priorityColors[project.priority]
+                )}
+              >
+                {project.priority}
+              </Badge>
+            </div>
+
+            {project.description && (
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                {project.description}
+              </p>
+            )}
+
+            <div className="mt-3 space-y-2">
+              <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${progressColor} transition-all duration-500`}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{progress}% complete</span>
+                {project.completedTasks !== undefined &&
+                  project.totalTasks !== undefined && (
+                    <span>
+                      {project.completedTasks}/{project.totalTasks} tasks
+                    </span>
+                  )}
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-4 pt-0">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-1">
+                <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  {new Date(project.dueDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </span>
+              </div>
+
+              <div className="flex -space-x-2">
+                {project.team.members.slice(0, 3).map((member, index) => (
+                  <Avatar
+                    key={index}
+                    className="h-6 w-6 border-2 border-background"
+                  >
+                    <AvatarImage src={member.avatar} />
+                    <AvatarFallback className="text-[10px] bg-gray-200 dark:bg-gray-700">
+                      {member.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {project.team.members.length > 3 && (
+                  <div className="h-6 w-6 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-background flex items-center justify-center text-xs text-muted-foreground">
+                    +{project.team.members.length - 3}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {project.tags && project.tags.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1">
+                {project.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className={cn(
+                      'text-xs px-2 py-0.5 rounded-full',
+                      TAG_COLORS[tag as keyof typeof TAG_COLORS] ||
+                      'bg-gray-100 dark:bg-gray-800'
+                    )}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* TASK ITEM */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <Card>
+          <CardContent className="p-4 flex gap-3 group">
+            <button
+              onClick={() => onToggleComplete(project.id)}
               className={cn(
                 "mt-0.5 flex-shrink-0 h-4 w-4 rounded border flex items-center justify-center transition-colors",
-                task.completed 
-                  ? "bg-blue-500 border-blue-500 text-white" 
+                project.completed
+                  ? "bg-blue-500 border-blue-500 text-white"
                   : "border-gray-300 dark:border-gray-600 hover:border-blue-500"
               )}
             >
-              {task.completed && <Check className="h-3 w-3" />}
+              {project.completed && <Check className="h-3 w-3" />}
             </button>
-            
+
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-start">
-                <h4 className={cn(
-                  "text-sm font-medium leading-snug",
-                  task.completed && "line-through text-gray-400 dark:text-gray-500"
-                )}>
-                  {task.title}
+                <h4
+                  className={cn(
+                    'text-sm font-medium leading-snug',
+                    project.completed &&
+                    'line-through text-gray-400 dark:text-gray-500'
+                  )}
+                >
+                  {project.name}
                 </h4>
                 <button className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-opacity">
                   <MoreVertical className="h-4 w-4" />
                 </button>
               </div>
 
-              {task.description && (
+              {project.description && (
                 <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                  {task.description}
+                  {project.description}
                 </p>
               )}
 
-              {task.labels && task.labels.length > 0 && (
+              {project.tags && project.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {task.labels.map((label) => (
-                    <span 
-                      key={label} 
+                  {project.tags.map((tag) => (
+                    <span
+                      key={tag}
                       className={cn(
-                        "text-xs px-2 py-0.5 rounded-full",
-                        LABEL_COLORS[label as keyof typeof LABEL_COLORS] || 'bg-gray-100 text-gray-700 dark:bg-gray-800'
+                        'text-xs px-2 py-0.5 rounded-full',
+                        'bg-gray-100 text-gray-700 dark:bg-gray-800'
                       )}
                     >
-                      {label}
+                      {tag}
                     </span>
                   ))}
                 </div>
@@ -498,31 +677,36 @@ const TaskCard = ({
 
               <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100 dark:border-gray-700/50">
                 <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-300">
-                  {task.dueDate && (
+                  {project.dueDate && (
                     <div className="flex items-center">
                       <Clock className="h-3 w-3 mr-1" />
-                      <span>{new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      <span>
+                        {new Date(project.dueDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
                     </div>
                   )}
-                  {task.comments > 0 && (
+                  {project.comments > 0 && (
                     <div className="flex items-center">
                       <MessageSquare className="h-3 w-3 mr-1" />
-                      <span>{task.comments}</span>
+                      <span>{project.comments}</span>
                     </div>
                   )}
-                  {task.attachments > 0 && (
+                  {project.attachments > 0 && (
                     <div className="flex items-center">
                       <Paperclip className="h-3 w-3 mr-1" />
-                      <span>{task.attachments}</span>
+                      <span>{project.attachments}</span>
                     </div>
                   )}
                 </div>
 
-                {task.assignee && (
+                {project.team?.members?.[0] && (
                   <Avatar className="h-6 w-6 border-2 border-white dark:border-gray-800">
-                    <AvatarImage src={task.assignee.avatar} />
+                    <AvatarImage src={project.team.members[0].avatar} />
                     <AvatarFallback className="text-xs">
-                      {task.assignee.name
+                      {project.team.members[0].name
                         .split(' ')
                         .map((n) => n[0])
                         .join('')}
@@ -531,9 +715,9 @@ const TaskCard = ({
                 )}
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </>
   );
-};
+}
