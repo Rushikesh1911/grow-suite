@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Menu, X, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 const navigation = [
   { name: 'Features', href: '#features' },
@@ -58,11 +59,13 @@ export function Header() {
             </button>
 
             <a href="/login" className="text-sm font-medium">
-              Log in →
+              Log in 
             </a>
 
-            <Button variant="gradient" className="rounded-full">
-              Get Started
+            <Button asChild variant="gradient" className="rounded-full">
+              <Link to="/signup">
+                Get Started
+              </Link>
             </Button>
           </div>
 

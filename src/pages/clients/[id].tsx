@@ -98,7 +98,7 @@ type Project = {
   updatedAt: string;
 };
 
-// Mock projects data - replace with actual API call
+// Mock projects data - replace with actual API call [not useful anymore ! ]
 const mockProjects: Project[] = [
   {
     id: '1',
