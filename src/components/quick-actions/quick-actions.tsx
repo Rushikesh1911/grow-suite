@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
 import { CreateClientModal } from '@/components/clients/create-client-modal';
+import { CreateProjectModal } from '@/components/projects/create-project-modal';
 
 type ActionItem = {
   id: string;
@@ -25,6 +26,7 @@ type ActionItem = {
 export function QuickActions() {
   const [isOpen, setIsOpen] = useState(false);
   const [isCreateClientModalOpen, setIsCreateClientModalOpen] = useState(false);
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleCreateClient = (clientData: any) => {
@@ -52,7 +54,7 @@ export function QuickActions() {
           label: 'New Project',
           icon: <Briefcase className="h-4 w-4" />,
           shortcut: '⌘+P',
-          onClick: () => navigate('/projects/new'),
+          onClick: () => setIsCreateProjectModalOpen(true),
         },
         {
           id: 'new-task',
@@ -153,10 +155,21 @@ export function QuickActions() {
       </DropdownMenu>
 
       {/* Create Client Modal */}
-      <CreateClientModal 
+      <CreateClientModal
         isOpen={isCreateClientModalOpen}
         onClose={() => setIsCreateClientModalOpen(false)}
-        onCreate={handleCreateClient}
+        onSave={handleCreateClient}
+      />
+      <CreateProjectModal
+        isOpen={isCreateProjectModalOpen}
+        onClose={() => setIsCreateProjectModalOpen(false)}
+        onSave={(projectData) => {
+          console.log('Creating project:', projectData);
+          // Here you would typically make an API call to create the project
+          // For now, we'll just show an alert
+          alert('Project created successfully!');
+          setIsCreateProjectModalOpen(false);
+        }}
       />
     </div>
   );
