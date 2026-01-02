@@ -1,8 +1,11 @@
 import type { ClientData } from '@/lib/client';
-import { Star, MoreVertical, Mail, Phone, MessageSquare, Globe, DollarSign, TrendingUp } from 'lucide-react';
+import { Star, MoreVertical, Mail, Phone, MessageSquare, ChevronRight, User, Briefcase, Clock } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 interface ClientCardProps {
   client: ClientData;
@@ -14,28 +17,28 @@ interface ClientCardProps {
 export function ClientCard({ client, onFavoriteToggle, onAction, onClick }: ClientCardProps) {
   const statusConfig = {
     active: {
-      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-      text: 'text-emerald-700 dark:text-emerald-300',
-      border: 'border-emerald-200 dark:border-emerald-800',
-      dot: 'bg-emerald-500'
+      bg: 'bg-emerald-500/10',
+      text: 'text-emerald-600 dark:text-emerald-400',
+      icon: '',
+      label: 'Active'
     },
     inactive: {
-      bg: 'bg-gray-50 dark:bg-gray-800/50',
+      bg: 'bg-gray-500/10',
       text: 'text-gray-600 dark:text-gray-400',
-      border: 'border-gray-200 dark:border-gray-700',
-      dot: 'bg-gray-400'
+      icon: '',
+      label: 'Inactive'
     },
     prospect: {
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
-      text: 'text-blue-700 dark:text-blue-300',
-      border: 'border-blue-200 dark:border-blue-800',
-      dot: 'bg-blue-500'
+      bg: 'bg-blue-500/10',
+      text: 'text-blue-600 dark:text-blue-400',
+      icon: '',
+      label: 'Prospect'
     },
     'on-hold': {
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
-      text: 'text-amber-700 dark:text-amber-300',
-      border: 'border-amber-200 dark:border-amber-800',
-      dot: 'bg-amber-500'
+      bg: 'bg-amber-500/10',
+      text: 'text-amber-600 dark:text-amber-400',
+      icon: '',
+      label: 'On Hold'
     },
   };
 
@@ -49,6 +52,7 @@ export function ClientCard({ client, onFavoriteToggle, onAction, onClick }: Clie
       .toUpperCase()
       .slice(0, 2);
   };
+
   const getContactIcon = () => {
     const method = client.preferredContactMethod || 'email'; // Default to 'email' if undefined
     switch (method) {
@@ -62,130 +66,107 @@ export function ClientCard({ client, onFavoriteToggle, onAction, onClick }: Clie
   };
 
   return (
-    <div
-      className={cn(
-        "group relative rounded-xl border border-gray-200 bg-white p-5 transition-all duration-200",
-        "hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-0.5",
-        "dark:border-gray-800 dark:bg-gray-900 dark:hover:shadow-gray-950/50",
-        onClick && "cursor-pointer"
-      )}
-      onClick={() => onClick?.(client)}
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.01 }}
+      transition={{ duration: 0.2 }}
+      className="group relative"
     >
-      {/* Favorite Star - Top Right */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onFavoriteToggle(client.id, !client.isFavorite);
-        }}
+      <Link 
+        to={`/clients/${client.id}`} 
         className={cn(
-          "absolute top-4 right-4 p-1.5 rounded-lg transition-all duration-200",
-          "hover:bg-gray-100 dark:hover:bg-gray-800",
-          client.isFavorite
-            ? "text-amber-500 hover:text-amber-600"
-            : "text-gray-300 hover:text-gray-400 dark:text-gray-600"
+          "block rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800",
+          "transition-all duration-200 overflow-hidden",
+          "hover:shadow-md hover:shadow-gray-100/50 dark:hover:shadow-gray-900/30",
+          "hover:border-gray-200 dark:hover:border-gray-700"
         )}
       >
-        <Star className={cn("h-4 w-4", client.isFavorite && "fill-current")} />
-      </button>
-
-      {/* Main Content */}
-      <div className="flex items-start space-x-4 pr-8">
-        {/* Avatar */}
-        <div className="relative flex-shrink-0">
-          <Avatar className="h-12 w-12 border-2 border-white shadow-sm dark:border-gray-800">
-            <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-600 text-white font-semibold text-sm">
-              {getInitials(client.name)}
-            </AvatarFallback>
-          </Avatar>
-          {client.clientType === 'company' && (
-            <div className="absolute -bottom-1 -right-1 rounded-full bg-white p-0.5 shadow-sm dark:bg-gray-900">
-              <div className="rounded-full bg-gray-100 p-1 dark:bg-gray-800">
-                <Globe className="h-2.5 w-2.5 text-gray-600 dark:text-gray-400" />
+        <div className="p-5">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={client.avatar} alt={client.name} />
+                <AvatarFallback className={cn("font-medium text-sm", status.text, status.bg)}>
+                  {getInitials(client.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="font-medium text-gray-900 dark:text-white group-hover:text-primary transition-colors">
+                  {client.name}
+                  <ChevronRight className="inline-block h-4 w-4 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 flex items-center">
+                  {getContactIcon()}
+                  <span className="ml-1.5 truncate max-w-[180px]">{client.email}</span>
+                </p>
+                
+                <div className="mt-2 flex items-center space-x-2">
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "text-xs font-normal px-2.5 py-0.5 rounded-full border-0",
+                      status.bg,
+                      status.text
+                    )}
+                  >
+                    <span className="mr-1">{status.icon}</span>
+                    {status.label}
+                  </Badge>
+                  {client.lastContacted && (
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Clock className="h-3 w-3 mr-1" />
+                      <span>2d ago</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Client Info */}
-        <div className="flex-1 min-w-0">
-          {/* Name & Company */}
-          <div className="mb-2">
-            <h3 className="font-semibold text-gray-900 dark:text-white truncate text-base mb-0.5">
-              {client.name}
-            </h3>
-            {client.company && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate flex items-center gap-1.5">
-                <Globe className="h-3 w-3 flex-shrink-0" />
-                {client.company}
-              </p>
-            )}
-          </div>
-
-          {/* Status & Contact Method */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
+            
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAction('menu', client);
+              }}
               className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border",
-                status.bg,
-                status.text,
-                status.border
+                "h-8 w-8 rounded-lg flex items-center justify-center",
+                "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
+                "dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800",
+                "transition-colors duration-150"
               )}
             >
-              <span className={cn("h-1.5 w-1.5 rounded-full", status.dot)} />
-              {client.status === 'on-hold' ? 'On Hold' : client.status.charAt(0).toUpperCase() + client.status.slice(1)}
-            </span>
-
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700">
-              {getContactIcon()}
-              {(client.preferredContactMethod || 'email').charAt(0).toUpperCase() + (client.preferredContactMethod || 'email').slice(1)}
-            </span>
-
-            {client.tags && client.tags.length > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 dark:bg-gray-800/50 dark:text-gray-400 dark:border-gray-700">
-                <TrendingUp className="h-3 w-3" />
-                {client.tags[0]}
-              </span>
-            )}
+              <MoreVertical className="h-4 w-4" />
+            </button>
           </div>
-
-       
-          <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-            {/* {client.email && (
-              <span className="inline-flex items-center gap-1.5 truncate max-w-[200px]">
-                <Mail className="h-3 w-3 flex-shrink-0" />
-                {client.email}
-              </span>
-            )} */}
-
-            {client.defaultHourlyRate && (
-              <span className="inline-flex items-center gap-1 flex-shrink-0">
-                <DollarSign className="h-3 w-3" />
-                {client.defaultCurrency} {client.defaultHourlyRate}/hr
-              </span>
-            )}
+          
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <Briefcase className="h-4 w-4 mr-1.5 text-gray-400" />
+                <span>{client.company || 'No company'}</span>
+              </div>
+            </div>
+            
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onFavoriteToggle(client.id, !client.isFavorite);
+              }}
+              className={cn(
+                "h-8 w-8 rounded-lg flex items-center justify-center",
+                "text-gray-400 hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20",
+                client.isFavorite && "text-amber-400",
+                "transition-colors duration-150"
+              )}
+              aria-label={client.isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Star className={cn("h-4 w-4", client.isFavorite && "fill-current")} />
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Actions Menu - Bottom Right */}
-      <div className="relative">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAction('menu', client);
-          }}
-          className={cn(
-            "absolute bottom-4 right-4 h-8 w-8 opacity-0 transition-opacity duration-200",
-            "group-hover:opacity-100",
-            "text-gray-400 hover:text-gray-600 hover:bg-gray-100",
-            "dark:text-gray-500 dark:hover:text-gray-300 dark:hover:bg-gray-800"
-          )}
-        >
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+      </Link>
+    </motion.div>
   );
 }
