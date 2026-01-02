@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter, Search, LayoutGrid, List, PlusCircle, MoreHorizontal } from 'lucide-react';
+import { Plus, Filter, Search, LayoutGrid, List, PlusCircle, MoreHorizontal, Edit, Trash2, Share2, Copy, Archive, Tag } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { ModernKanbanBoard } from '@/components/kanban/modern-kanban-board';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 // Simple list view component
 function ListView({ projects }) {
@@ -106,9 +115,45 @@ function ListView({ projects }) {
                 <span className="text-xs text-muted-foreground">{project.progress}%</span>
               </TableCell>
               <TableCell>
-                <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem>
+                        <Edit className="mr-2 h-4 w-4" />
+                        <span>Edit Project</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        <span>Share</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Copy className="mr-2 h-4 w-4" />
+                        <span>Duplicate</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Tag className="mr-2 h-4 w-4" />
+                        <span>Add Label</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Archive className="mr-2 h-4 w-4" />
+                        <span>Archive</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))}

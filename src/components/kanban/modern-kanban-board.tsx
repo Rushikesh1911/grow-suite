@@ -3,7 +3,7 @@ import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors , closest
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable  } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
-import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList, CalendarDays, X } from 'lucide-react';
+import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList, CalendarDays, X, Edit, Trash2, Share2, Copy, Archive, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,15 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 
 type Project = {
@@ -639,18 +648,48 @@ const ProjectCard = ({
 
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-start">
-                <h4
-                  className={cn(
-                    'text-sm font-medium leading-snug',
-                    project.completed &&
-                    'line-through text-gray-400 dark:text-gray-500'
-                  )}
-                >
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                   {project.name}
-                </h4>
-                <button className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-opacity">
-                  <MoreVertical className="h-4 w-4" />
-                </button>
+                </h3>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="text-gray-400 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300">
+                      <MoreVertical className="h-4 w-4" />
+                      <span className="sr-only">Open menu</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem>
+                        <Edit className="mr-2 h-4 w-4" />
+                        <span>Edit Project</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Share2 className="mr-2 h-4 w-4" />
+                        <span>Share</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Copy className="mr-2 h-4 w-4" />
+                        <span>Duplicate</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Tag className="mr-2 h-4 w-4" />
+                        <span>Add Label</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Archive className="mr-2 h-4 w-4" />
+                        <span>Archive</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600 focus:text-red-600 dark:text-red-400 dark:focus:text-red-400">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {project.description && (
