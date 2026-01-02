@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
-import { SortableContext, arrayMove } from '@dnd-kit/sortable';
+import { SortableContext, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
-import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check } from 'lucide-react';
+import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,17 +94,18 @@ const initialTasks: Task[] = [
     labels: ['development', 'feature'],
     assignee: { name: 'Jordan', avatar: '' },
   },
-  {
-    id: '3',
-    title: 'Fix responsive issues',
-    description: 'Address mobile layout problems on dashboard',
-    status: 'in-review',
-    priority: 'medium',
-    dueDate: '2024-01-08',
-    labels: ['bug', 'development'],
-    assignee: { name: 'Taylor', avatar: '' },
-    comments: 5,
-  },
+  // Temporarily removed to demonstrate empty state
+  // {
+  //   id: '3',
+  //   title: 'Fix responsive issues',
+  //   description: 'Address mobile layout problems on dashboard',
+  //   status: 'in-review',
+  //   priority: 'medium',
+  //   dueDate: '2024-01-08',
+  //   labels: ['bug', 'development'],
+  //   assignee: { name: 'Taylor', avatar: '' },
+  //   comments: 5,
+  // },
   {
     id: '4',
     title: 'Add dark mode toggle',
@@ -129,6 +130,7 @@ const initialTasks: Task[] = [
 export function ModernKanbanBoard() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
 
@@ -145,7 +147,7 @@ export function ModernKanbanBoard() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5, // Reduced from 8 to make it more responsive
       },
     })
   );
@@ -155,13 +157,18 @@ export function ModernKanbanBoard() {
     const task = tasks.find((t) => t.id === active.id);
     if (task) {
       setActiveTask(task);
+      setActiveId(active.id as string);
     }
   };
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over) return;
-    setActiveColumn(over.id as string);
+    
+    // Only update if we're over a different column
+    if (active.id !== over.id) {
+      setActiveColumn(over.id as string);
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -170,16 +177,51 @@ export function ModernKanbanBoard() {
 
     setActiveTask(null);
     setActiveColumn(null);
+    setActiveId(null);
 
     const activeTask = tasks.find((t) => t.id === active.id);
     if (!activeTask) return;
 
-    if (active.id !== over.id) {
-      setTasks((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+    // Check if we're dropping on a task or a column
+    const isOverTask = tasks.some(task => task.id === over.id);
+    
+    if (isOverTask) {
+      // If dropping on another task, find its column
+      const overTask = tasks.find(t => t.id === over.id);
+      if (!overTask) return;
+      
+      // Move to the same column as the task we're dropping on
+      if (activeTask.status !== overTask.status) {
+        setTasks(tasks.map(task => 
+          task.id === active.id 
+            ? { ...task, status: overTask.status } 
+            : task
+        ));
+      } else {
+        // Reorder within the same column
+        setTasks((items) => {
+          const oldIndex = items.findIndex((item) => item.id === active.id);
+          const newIndex = items.findIndex((item) => item.id === over.id);
+          
+          if (oldIndex !== newIndex) {
+            return arrayMove(items, oldIndex, newIndex);
+          }
+          return items;
+        });
+      }
+    } else {
+      // If dropping on a column (empty area)
+      const overColumn = COLUMNS.find(col => over.id.toString() === col.id);
+      if (!overColumn) return;
+      
+      // Move to the new column
+      if (activeTask.status !== overColumn.id) {
+        setTasks(tasks.map(task => 
+          task.id === active.id 
+            ? { ...task, status: overColumn.id } 
+            : task
+        ));
+      }
     }
   };
 
@@ -254,25 +296,29 @@ export function ModernKanbanBoard() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <div className="flex space-x-2">
-                        <Input
-                          placeholder="Add a task..."
-                          className="h-9 text-sm border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                          value={newTaskTitle}
-                          onChange={(e) => setNewTaskTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleAddTask(column.id);
-                            }
-                          }}
-                        />
+                      <div className="flex space-x-2 group">
+                        <div className="relative flex-1">
+                          <Plus className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+                          <Input
+                            placeholder="Add a task..."
+                            className="h-9 pl-9 text-sm border-2 border-dashed border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 hover:border-blue-200 dark:hover:border-gray-600 focus:border-blue-500 focus:border-solid transition-all"
+                            value={newTaskTitle}
+                            onChange={(e) => setNewTaskTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleAddTask(column.id);
+                              }
+                            }}
+                          />
+                        </div>
                         <Button
                           size="sm"
                           onClick={() => handleAddTask(column.id)}
-                          className="h-9 w-9 p-0"
+                          className="h-9 px-3 transition-all"
                           variant="outline"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-4 w-4 mr-1.5" />
+                          <span className="text-sm">Add</span>
                         </Button>
                       </div>
                     </motion.div>
@@ -280,13 +326,32 @@ export function ModernKanbanBoard() {
                     <AnimatePresence>
                       <SortableContext items={columnTasks.map((t) => t.id)}>
                         <div className="space-y-3">
-                          {columnTasks.map((task) => (
-                            <TaskCard 
-                              key={task.id} 
-                              task={task} 
-                              onToggleComplete={toggleTaskCompletion}
-                            />
-                          ))}
+                          {columnTasks.length > 0 ? (
+                            columnTasks.map((task) => (
+                              <TaskCard 
+                                key={task.id} 
+                                task={task} 
+                                onToggleComplete={toggleTaskCompletion}
+                              />
+                            ))
+                          ) : (
+                            <motion.div 
+                              className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-center"
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-3">
+                                <ClipboardList className="h-5 w-5 text-blue-500" />
+                              </div>
+                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                No tasks yet
+                              </h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Drag tasks here or click "Add" to create one
+                              </p>
+                            </motion.div>
+                          )}
                         </div>
                       </SortableContext>
                     </AnimatePresence>
@@ -348,19 +413,38 @@ export function ModernKanbanBoard() {
   );
 }
 
-function TaskCard({ 
+const TaskCard = ({ 
   task, 
   onToggleComplete 
 }: { 
   task: Task; 
   onToggleComplete: (id: string) => void;
-}) {
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1 : 'auto',
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.15 }}
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      style={style}
     >
       <Card className="group hover:shadow-md transition-all duration-200 border border-gray-100 dark:border-gray-700/50 hover:border-gray-200 dark:hover:border-gray-600 overflow-hidden">
         <CardContent className="p-4">
@@ -452,4 +536,4 @@ function TaskCard({
       </Card>
     </motion.div>
   );
-}
+};
