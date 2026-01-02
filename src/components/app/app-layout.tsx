@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown, User, LogOut, ChevronsUpDown, ListTodo, Clock, CreditCard, LayoutGrid, Folder } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, FileText, BarChart, HelpCircle, Menu, X, Bell, ChevronDown, User, LogOut, ChevronsUpDown, ListTodo, Clock, CreditCard, LayoutGrid, Folder, ChevronLeft, ChevronRight } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { ProfileSettings } from '@/components/profile/profile-settings';
 import { QuickActions } from '@/components/quick-actions/quick-actions';
 import { Button } from '@/components/ui/button';
@@ -93,6 +94,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -148,25 +150,50 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 transform flex-col bg-white dark:bg-gray-900 transition-transform duration-300 ease-in-out lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex flex-col bg-white dark:bg-gray-900 transition-all duration-300 ease-in-out',
+          'border-r border-gray-200 dark:border-gray-800',
+          // Mobile styles
+          'w-64 transform lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full',
-          'border-r border-gray-200 dark:border-gray-800'
+          // Desktop styles
+          'lg:w-64',
+          collapsed && 'lg:w-20',
+          'group/sidebar' // For group hover effects
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4 dark:border-gray-800">
-          <Link to="/dashboard" className="flex items-center">
+          <Link 
+            to="/dashboard" 
+            className={cn(
+              'flex items-center transition-opacity duration-200',
+              collapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'
+            )}
+          >
             <img
               src="/growsuite-logo.png"
               alt="GrowSuite"
               className="h-10 w-auto"
             />
           </Link>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 lg:hidden"
-          >
-            <X className="h-6 w-6" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 lg:hidden"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="hidden lg:flex items-center justify-center p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? (
+                <ChevronRight className="h-5 w-5" />
+              ) : (
+                <ChevronLeft className="h-5 w-5" />
+              )}
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-4">
@@ -174,7 +201,13 @@ export function AppLayout({ children }: AppLayoutProps) {
             {sidebarItems.map((item) => (
               <div key={item.name}>
                 {item.type === 'header' ? (
-                  <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  <div 
+                    className={cn(
+                      'px-3 py-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400',
+                      'transition-opacity duration-200',
+                      collapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'
+                    )}
+                  >
                     {item.name}
                   </div>
                 ) : (
@@ -207,14 +240,17 @@ export function AppLayout({ children }: AppLayoutProps) {
                     >
                       <div className="flex items-center">
                         <span className={cn(
-                          'mr-3',
-                          isActive(item.href) 
-                            ? 'text-primary-600 dark:text-primary-300' 
-                            : 'text-gray-500 group-hover:text-gray-600 dark:text-gray-400 dark:group-hover:text-gray-300'
+                          'flex-shrink-0',
+                          collapsed ? 'mx-auto' : 'mr-3'
                         )}>
                           {getActiveIcon(item.icon, isActive(item.href))}
                         </span>
-                        {item.name}
+                        <span className={cn(
+                          'transition-opacity duration-200',
+                          collapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'
+                        )}>
+                          {item.name}
+                        </span>
                       </div>
                       {item.children && (
                         <ChevronDown
@@ -255,18 +291,31 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="flex items-center gap-3">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-9 w-full items-center justify-between px-2">
+                  <Button 
+                    variant="ghost" 
+                    className={cn(
+                      "relative h-9 items-center justify-between px-2 w-full",
+                      collapsed ? "justify-center" : ""
+                    )}
+                  >
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={currentUser?.photoURL || ''} alt={userDisplayName} />
                         <AvatarFallback>{userInitial}</AvatarFallback>
                       </Avatar>
-                      <div className="hidden flex-col md:flex">
-                        <span className="text-sm font-medium">{userDisplayName}</span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">{userEmail}</span>
+                      <div className={cn(
+                        "flex-col transition-opacity duration-200",
+                        collapsed ? "hidden" : "hidden md:flex",
+                        collapsed ? "opacity-0 w-0" : "opacity-100"
+                      )}>
+                        <span className="text-sm font-medium truncate max-w-[120px]">{userDisplayName}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]">{userEmail}</span>
                       </div>
                     </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                    <ChevronsUpDown className={cn(
+                      "h-4 w-4 opacity-50 transition-opacity duration-200",
+                      collapsed ? "hidden" : "ml-2"
+                    )} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -324,18 +373,25 @@ export function AppLayout({ children }: AppLayoutProps) {
       />
 
       {/* Main content */}
-      <div className="flex flex-1 flex-col lg:pl-64">
+      <div className={cn(
+        'flex flex-1 flex-col overflow-hidden transition-all duration-300',
+        'ml-0 lg:ml-64',
+        collapsed && 'lg:ml-20'
+      )}>
         {/* Top navigation */}
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:gap-x-6 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 dark:border-gray-800 dark:bg-gray-900">
           <div className="flex items-center">
             <button
               type="button"
-              className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
+              className="mr-2 text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300 lg:hidden"
               onClick={() => setSidebarOpen(true)}
             >
               <span className="sr-only">Open sidebar</span>
-              <Menu className="h-6 w-6" aria-hidden="true" />
+              <Menu className="h-6 w-6" />
             </button>
+            <h1 className="text-lg font-medium text-gray-900 dark:text-white">
+              {sidebarItems.find(item => isActive(item.href))?.name || 'Dashboard'}
+            </h1>
           </div>
 
           {/* Search bar */}
