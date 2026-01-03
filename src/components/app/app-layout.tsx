@@ -184,14 +184,27 @@ export function AppLayout({ children }: AppLayoutProps) {
             </button>
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="hidden lg:flex items-center justify-center p-1.5 rounded-md text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+              className="hidden lg:flex items-center justify-center p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition-all duration-200 hover:scale-105"
               title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              {collapsed ? (
-                <ChevronRight className="h-5 w-5" />
-              ) : (
-                <ChevronLeft className="h-5 w-5" />
-              )}
+              <div className="relative h-5 w-5">
+                <div className={cn(
+                  'absolute top-0 left-0 w-full h-full transition-all duration-300 flex items-center justify-center',
+                  collapsed ? 'opacity-100' : 'opacity-0 -rotate-90'
+                )}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className={cn(
+                  'absolute top-0 left-0 w-full h-full transition-all duration-300 flex items-center justify-center',
+                  collapsed ? 'opacity-0 rotate-90' : 'opacity-100'
+                )}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6L20 6M4 12H20M4 18H20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
             </button>
           </div>
         </div>
