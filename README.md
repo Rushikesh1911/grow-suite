@@ -8,7 +8,7 @@
 
 GrowSuite is a modern, responsive, and feature-rich Customer Relationship Management (CRM) application built with the latest web technologies. It helps businesses manage their clients, projects, and communications in one place.
 
-## 🚀 Features
+## 🚀 Features : 
 
 - **Modern UI/UX**: Clean, responsive design with dark/light mode support
 - **Client Management**: Organize and track client information
