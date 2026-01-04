@@ -15,10 +15,9 @@ export function ClientSecondaryPanel({ client, isOpen, onToggle, onEdit }: Clien
   if (!client) return null;
 
   return (
-    <div 
-      className={`fixed right-0 top-16 h-[calc(100vh-4rem)] bg-black transition-all duration-300 ease-in-out z-10 shadow-2xl ${
-        isOpen ? 'w-80' : 'w-0 overflow-hidden'
-      }`}
+    <div
+      className={`fixed right-0 top-16 h-[calc(100vh-4rem)] bg-black transition-all duration-300 ease-in-out z-10 shadow-2xl ${isOpen ? 'w-80' : 'w-0 overflow-hidden'
+        }`}
       style={{
         boxShadow: '-4px 0 15px rgba(0, 0, 0, 0.3)'
       }}
@@ -28,17 +27,17 @@ export function ClientSecondaryPanel({ client, isOpen, onToggle, onEdit }: Clien
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h3 className="font-semibold">Client Details</h3>
           <div className="flex items-center space-x-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onEdit}
               className="h-8 w-8"
             >
               <Edit className="h-4 w-4" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onToggle}
               className="h-8 w-8"
             >
@@ -78,9 +77,9 @@ export function ClientSecondaryPanel({ client, isOpen, onToggle, onEdit }: Clien
               {client.website && (
                 <div className="flex items-center space-x-2">
                   <Globe className="h-4 w-4 text-muted-foreground" />
-                  <a 
-                    href={client.website.startsWith('http') ? client.website : `https://${client.website}`} 
-                    target="_blank" 
+                  <a
+                    href={client.website.startsWith('http') ? client.website : `https://${client.website}`}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm hover:underline"
                   >
@@ -117,9 +116,13 @@ export function ClientSecondaryPanel({ client, isOpen, onToggle, onEdit }: Clien
                 <span className="text-muted-foreground">Created</span>
                 <span>{client.createdAt ? format(new Date(client.createdAt), 'MMM d, yyyy') : 'N/A'}</span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Last Contact</span>
-                <span>{client.lastContact ? format(new Date(client.lastContact), 'MMM d, yyyy') : 'N/A'}</span>
+                {client.lastContact ? (
+                  <span>{format(new Date(client.lastContact), 'MMM d, yyyy')}</span>
+                ) : (
+                  <span className="text-muted-foreground text-sm">No contact yet</span>
+                )}
               </div>
             </div>
           </div>
@@ -139,6 +142,40 @@ export function ClientSecondaryPanel({ client, isOpen, onToggle, onEdit }: Clien
               </div>
             </div>
           )}
+
+
+          {/* Recent Interactions */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground">Recent Interactions</h4>
+            {client.interactions?.length > 0 ? (
+              <div className="space-y-3">
+                {client.interactions.map((interaction: any) => (
+                  <div key={interaction.id} className="p-3 rounded-lg bg-gray-900">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          {interaction.type === 'email' && <Mail className="h-4 w-4 text-primary" />}
+                          {interaction.type === 'call' && <Phone className="h-4 w-4 text-primary" />}
+                          {interaction.type === 'meeting' && <Calendar className="h-4 w-4 text-primary" />}
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{interaction.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{interaction.details}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {format(new Date(interaction.date), 'MMM d, yyyy h:mm a')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center p-4 border border-dashed border-gray-700 rounded-lg">
+                <p className="text-sm text-muted-foreground">No interactions yet</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

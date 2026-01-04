@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useState , useEffect} from 'react';
 import {
   X,
   FolderPlus,
@@ -25,18 +25,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/toast';
-import { auth } from '@/config/firebase';
+import { auth, db } from '@/config/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave?: (projectData: ProjectData) => void;
+  initialData?: {
+    clientId?: string;
+    clientName?: string;
+  };
 }
 
 type ProjectStatus = 'planning' | 'in-progress' | 'on-hold' | 'completed' | 'cancelled';
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
 type ProjectData = {
+  id?: string;
   // Basic Info
   projectName: string;
   projectCode: string;
@@ -46,11 +52,11 @@ type ProjectData = {
   
   // Timeline
   startDate: string;
-  dueDate: string;
-  estimatedHours: string;
+  dueDate: string | null;
+  estimatedHours: number | string;
   
   // Budget & Billing
-  budget: string;
+  budget: number | string;
   currency: string;
   billingMethod: 'fixed' | 'hourly' | 'milestone';
   
@@ -61,10 +67,13 @@ type ProjectData = {
   // Team
   teamMembers: string[];
   projectManager: string;
+  createdBy?: string;
   
   // Additional
   tags: string[];
   notes: string;
+  createdAt?: any;
+  updatedAt?: any;
 };
 
 const STATUS_OPTIONS = [
@@ -95,16 +104,17 @@ const CURRENCIES = [
   { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
 ];
 
-export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectModalProps) {
-  const [errors, setErrors] = useState<Partial<Record<keyof ProjectData, string>>>({});
+export function CreateProjectModal({ isOpen, onClose, onSave, initialData }: CreateProjectModalProps) {
+  const [errors, setErrors] = useState<Partial<Record<keyof ProjectData, string>>>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'team' | 'budget'>('details');
 
-  const [formData, setFormData] = useState<ProjectData>({
+  const [formData, setFormData] = useState<ProjectData>(() => ({
     projectName: '',
     projectCode: '',
     description: '',
     clientName: '',
+    clientId: '',
     startDate: new Date().toISOString().split('T')[0],
     dueDate: '',
     estimatedHours: '',
@@ -117,7 +127,17 @@ export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectMod
     projectManager: '',
     tags: [],
     notes: ''
-  });
+  }));
+
+  useEffect(() => {
+    if (isOpen && initialData) {
+      setFormData(prev => ({
+        ...prev,
+        clientId: initialData.clientId || '',
+        clientName: initialData.clientName || ''
+      }));
+    }
+  }, [isOpen, initialData]);
 
   const handleInputChange = (field: keyof ProjectData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -133,7 +153,7 @@ export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectMod
       newErrors.projectName = 'Project name is required';
     }
 
-    if (!formData.clientName.trim()) {
+    if (!initialData?.clientName && !formData.clientName.trim()) {
       newErrors.clientName = 'Client is required';
     }
 
@@ -141,13 +161,11 @@ export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectMod
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) {
       return;
     }
-
     const currentUser = auth.currentUser;
     if (!currentUser) {
       toast({
@@ -157,22 +175,38 @@ export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectMod
       });
       return;
     }
-
     setIsSaving(true);
-
     try {
-      // Here you would typically make an API call to save the project
-      // For now, we'll just call the onSave callback with the form data
-      if (onSave) {
-        onSave(formData);
-      }
+      const projectData = {
+        ...formData,
+        // Ensure client data is included even if the field is hidden
+        clientId: initialData?.clientId || formData.clientId,
+        clientName: initialData?.clientName || formData.clientName,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        status: formData.status || 'planning',
+        priority: formData.priority || 'medium',
+        teamMembers: formData.teamMembers || [],
+        tags: formData.tags || [],
+        budget: formData.budget ? Number(formData.budget) : 0,
+        estimatedHours: formData.estimatedHours ? Number(formData.estimatedHours) : 0,
+        startDate: formData.startDate,
+        dueDate: formData.dueDate || null,
+      };
+      const projectRef = await addDoc(collection(db, 'projects'), projectData);
       
+      if (onSave) {
+        onSave({
+          id: projectRef.id,
+          ...projectData
+        });
+      }
       toast({
         title: 'Success',
         description: 'Project created successfully',
         variant: 'success'
       });
-      
       onClose();
     } catch (error) {
       console.error('Error creating project:', error);
@@ -186,10 +220,11 @@ export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectMod
     }
   };
 
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-56 pr-4">
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
@@ -287,13 +322,20 @@ export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectMod
                       <Building2 className="h-4 w-4 mr-2 text-gray-500" />
                       Client *
                     </Label>
-                    <Input
-                      id="clientName"
-                      value={formData.clientName}
-                      onChange={(e) => handleInputChange('clientName', e.target.value)}
-                      placeholder="Select client"
-                      className={errors.clientName ? 'border-red-500' : ''}
-                    />
+                    {!initialData?.clientName && (
+                      <Input
+                        id="clientName"
+                        value={formData.clientName}
+                        onChange={(e) => handleInputChange('clientName', e.target.value)}
+                        placeholder="Select client"
+                        className={errors.clientName ? 'border-red-500' : ''}
+                      />
+                    )}
+                    {initialData?.clientName && (
+                      <div className="flex items-center p-2 border rounded-md bg-gray-50 dark:bg-gray-800">
+                        <span className="text-sm">{initialData.clientName}</span>
+                      </div>
+                    )}
                     {errors.clientName && (
                       <p className="text-sm text-red-500 flex items-center">
                         <AlertCircle className="h-4 w-4 mr-1" /> {errors.clientName}

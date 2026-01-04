@@ -21,6 +21,8 @@ import DashboardPage from './pages/dashboard';
 import ClientsPage from './pages/clients';
 import ClientDetailPage from './pages/clients/[id]';
 import ProjectsPage from './pages/projects';
+import ProjectDetailPage from './pages/projects/[id]';
+import InvoicesPage from './pages/invoices';
 
 function App() {
   return (
@@ -50,8 +52,10 @@ function App() {
             {/* Dashboard routes with layout */}
             <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
             <Route path="/projects" element={<AppLayout><ProjectsPage /></AppLayout>} />
+            <Route path="/projects/:id" element={<AppLayout><ProjectDetailPage /></AppLayout>} />
             <Route path="/clients" element={<AppLayout><ClientsPage /></AppLayout>} />
             <Route path="/clients/:id" element={<AppLayout><ClientDetailPage /></AppLayout>} />
+            <Route path="/invoices" element={<AppLayout><InvoicesPage /></AppLayout>} />
           </Route>
           
           {/* 404 route */}

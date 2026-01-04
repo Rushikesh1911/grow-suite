@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo , useEffect } from 'react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors , closestCenter } from '@dnd-kit/core';
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable  } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
-import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList, CalendarDays, X, Edit, Trash2, Share2, Copy, Archive, Tag } from 'lucide-react';
+import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList, Calendar, CalendarDays, X, Edit, Trash2, Share2, Copy, Archive, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,13 +32,12 @@ type Project = {
   dueDate: string;
   progress: number;
   tags?: string[];
-  team: {
-    members: Array<{
-      name: string;
-      role: string;
-      avatar?: string;
-    }>;
-  };
+  teamMembers?: Array<{
+    userId: string;
+    name: string;
+    role: string;
+    avatar?: string;
+  }>;
   budget?: number;
   completedTasks?: number;
   totalTasks?: number;
@@ -98,16 +97,11 @@ const initialProjects: Project[] = [
     dueDate: '2024-03-15',
     progress: 65,
     tags: ['web', 'development'],
-    team: {
-      members: [
-        { name: 'Alex', role: 'Frontend', avatar: '' },
-        { name: 'Jordan', role: 'Backend', avatar: '' },
-        { name: 'Taylor', role: 'Design', avatar: '' },
-      ]
-    },
-    budget: 25000,
-    completedTasks: 13,
-    totalTasks: 20,
+    teamMembers: [
+      { userId: '1', name: 'Alex', role: 'Frontend', avatar: '' },
+      { userId: '2', name: 'Jordan', role: 'Backend', avatar: '' },
+      { userId: '3', name: 'Taylor', role: 'Design', avatar: '' },
+    ]
   },
   {
     id: '2',
@@ -119,15 +113,10 @@ const initialProjects: Project[] = [
     dueDate: '2024-04-30',
     progress: 15,
     tags: ['mobile', 'design'],
-    team: {
-      members: [
-        { name: 'Casey', role: 'Design', avatar: '' },
-        { name: 'Riley', role: 'Mobile', avatar: '' },
-      ]
-    },
-    budget: 18000,
-    completedTasks: 3,
-    totalTasks: 25,
+    teamMembers: [
+      { userId: '4', name: 'Casey', role: 'Design', avatar: '' },
+      { userId: '5', name: 'Riley', role: 'Mobile', avatar: '' },
+    ]
   },
   {
     id: '3',
@@ -139,15 +128,10 @@ const initialProjects: Project[] = [
     dueDate: '2024-01-31',
     progress: 90,
     tags: ['web', 'marketing'],
-    team: {
-      members: [
-        { name: 'Morgan', role: 'Frontend', avatar: '' },
-        { name: 'Jamie', role: 'Content', avatar: '' },
-      ]
-    },
-    budget: 15000,
-    completedTasks: 18,
-    totalTasks: 20,
+    teamMembers: [
+      { userId: '6', name: 'Morgan', role: 'Frontend', avatar: '' },
+      { userId: '7', name: 'Jamie', role: 'Content', avatar: '' },
+    ]
   },
   {
     id: '4',
@@ -159,35 +143,39 @@ const initialProjects: Project[] = [
     dueDate: '2023-12-31',
     progress: 100,
     tags: ['web', 'development'],
-    team: {
-      members: [
-        { name: 'Alex', role: 'Frontend', avatar: '' },
-        { name: 'Jordan', role: 'Backend', avatar: '' },
-        { name: 'Taylor', role: 'QA', avatar: '' },
-      ]
-    },
-    budget: 30000,
-    completedTasks: 45,
-    totalTasks: 45,
+    teamMembers: [
+      { userId: '8', name: 'Alex', role: 'Frontend', avatar: '' },
+      { userId: '9', name: 'Jordan', role: 'Backend', avatar: '' },
+      { userId: '10', name: 'Taylor', role: 'QA', avatar: '' },
+    ]
   },
 ];
 
-export function ModernKanbanBoard() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
+interface ModernKanbanBoardProps {
+  projects: Project[];
+  onProjectUpdate?: (projectId: string, updates: Partial<Project>) => Promise<void>;
+}
+
+export function ModernKanbanBoard({ projects, onProjectUpdate }: ModernKanbanBoardProps) {
+  const [localProjects, setLocalProjects] = useState<Project[]>(projects);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState('');
   const [activeColumn, setActiveColumn] = useState<string | null>(null);
 
+  useEffect(() => {
+    setLocalProjects(projects);
+  }, [projects]);
+
   const projectsByStatus = useMemo(() => {
-    return projects.reduce((acc, project) => {
+    return localProjects.reduce((acc, project) => {
       if (!acc[project.status]) {
         acc[project.status] = [];
       }
       acc[project.status].push(project);
       return acc;
     }, {} as Record<string, Project[]>);
-  }, [projects]);
+  }, [localProjects]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -220,7 +208,7 @@ export function ModernKanbanBoard() {
 
     // Dropping over a project
     if (isOverAProject) {
-      setProjects((projects) => {
+      setLocalProjects((projects) => {
         const activeIndex = projects.findIndex((p) => p.id === activeId);
         const overIndex = projects.findIndex((p) => p.id === overId);
 
@@ -257,9 +245,7 @@ export function ModernKanbanBoard() {
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       progress: 0,
       tags: ['development'],
-      team: {
-        members: []
-      },
+      teamMembers: [],
       completedTasks: 0,
       totalTasks: 0,
     };
@@ -523,34 +509,64 @@ const ProjectCard = ({
           )}
         >
           <CardHeader className="p-4 pb-2">
-            <div className="flex items-start justify-between">
-              <CardTitle
-                className={cn(
-                  'text-sm font-medium leading-tight transition-colors',
-                  project.status === 'completed'
-                    ? 'line-through text-muted-foreground'
-                    : ''
+            <div className="space-y-2">
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-base font-semibold leading-tight">
+                    {project.name || 'Untitled Project'}
+                  </CardTitle>
+                  {project.clientName && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Client: {project.clientName}
+                    </p>
+                  )}
+                </div>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'text-xs font-medium',
+                    priorityColors[project.priority]
+                  )}
+                >
+                  {project.priority}
+                </Badge>
+              </div>
+              
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center">
+                  <div className={cn(
+                    'h-2 w-2 rounded-full mr-1.5',
+                    {
+                      'bg-blue-500': project.status === 'in-progress',
+                      'bg-green-500': project.status === 'completed',
+                      'bg-yellow-500': project.status === 'planning',
+                      'bg-purple-500': project.status === 'review',
+                      'bg-gray-500': project.status === 'on-hold' || project.status === 'cancelled',
+                    }
+                  )} />
+                  <span className="capitalize">{project.status.replace('-', ' ')}</span>
+                </div>
+                {project.dueDate && (
+                  <div className="flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    <span>{new Date(project.dueDate).toLocaleDateString()}</span>
+                  </div>
                 )}
-              >
-                {project.name}
-              </CardTitle>
-              <Badge
-                className={cn(
-                  'text-xs font-medium',
-                  priorityColors[project.priority]
-                )}
-              >
-                {project.priority}
-              </Badge>
-            </div>
+              </div>
 
+            </div>
+            
             {project.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
                 {project.description}
               </p>
             )}
 
             <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span>Progress</span>
+                <span className="font-medium">{progress}%</span>
+              </div>
               <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${progressColor} transition-all duration-500`}
@@ -559,7 +575,6 @@ const ProjectCard = ({
               </div>
 
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{progress}% complete</span>
                 {project.completedTasks !== undefined &&
                   project.totalTasks !== undefined && (
                     <span>
@@ -583,7 +598,7 @@ const ProjectCard = ({
               </div>
 
               <div className="flex -space-x-2">
-                {project.team.members.slice(0, 3).map((member, index) => (
+                {(project.teamMembers || []).slice(0, 3).map((member, index) => (
                   <Avatar
                     key={index}
                     className="h-6 w-6 border-2 border-background"
@@ -597,9 +612,9 @@ const ProjectCard = ({
                     </AvatarFallback>
                   </Avatar>
                 ))}
-                {project.team.members.length > 3 && (
-                  <div className="h-6 w-6 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-background flex items-center justify-center text-xs text-muted-foreground">
-                    +{project.team.members.length - 3}
+                {(project.teamMembers || []).length > 3 && (
+                  <div className="h-6 w-6 rounded-full border-2 border-background bg-muted flex items-center justify-center text-xs">
+                    +{(project.teamMembers || []).length - 3}
                   </div>
                 )}
               </div>
@@ -741,11 +756,11 @@ const ProjectCard = ({
                   )}
                 </div>
 
-                {project.team?.members?.[0] && (
+                {project.teamMembers?.[0] && (
                   <Avatar className="h-6 w-6 border-2 border-white dark:border-gray-800">
-                    <AvatarImage src={project.team.members[0].avatar} />
+                    <AvatarImage src={project.teamMembers[0].avatar} />
                     <AvatarFallback className="text-xs">
-                      {project.team.members[0].name
+                      {project.teamMembers[0].name
                         .split(' ')
                         .map((n) => n[0])
                         .join('')}
