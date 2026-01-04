@@ -173,6 +173,25 @@ export const toggleFavorite = async (clientId: string, isFavorite: boolean): Pro
   }
 };
 
+/**
+ * Get all projects for a specific client
+ */
+export const getClientProjects = async (clientId: string): Promise<any[]> => {
+  try {
+    const projectsRef = collection(db, 'projects');
+    const q = query(projectsRef, where('clientId', '==', clientId));
+    const querySnapshot = await getDocs(q);
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('Error fetching client projects:', error);
+    throw new Error('Failed to fetch client projects');
+  }
+};
+
 export const clientService = {
   createClient,
   updateClient,
@@ -180,4 +199,5 @@ export const clientService = {
   getUserClients,
   deleteClient,
   toggleFavorite,
+  getClientProjects
 };

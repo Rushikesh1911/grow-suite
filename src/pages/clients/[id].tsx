@@ -140,9 +140,22 @@ const ClientDetailPage = () => {
   const [comment, setComment] = useState('');
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isSecondaryPanelOpen, setIsSecondaryPanelOpen] = useState(false);
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
+
+  // Helper function to safely format dates
+  const formatEventDate = (dateString?: string) => {
+    if (!dateString) return 'Recent';
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) ? 'Recent' : format(date, 'MMM d, h:mm a');
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Recent';
+    }
+  };
 
   const toggleSecondaryPanel = () => {
     setIsSecondaryPanelOpen(!isSecondaryPanelOpen);
@@ -170,12 +183,51 @@ const ClientDetailPage = () => {
         setTimeline([]);
         
         // Fetch projects for this client
+        setLoadingProjects(true);
         try {
           const clientProjects = await clientService.getClientProjects(id);
-          setProjects(clientProjects || []);
+          // Transform project data to match our Project type
+          const formattedProjects = clientProjects?.map(project => ({
+            id: project.id,
+            name: project.projectName || 'Untitled Project',
+            status: project.status || 'planning',
+            progress: project.progress || 0,
+            dueDate: project.endDate,
+            budget: project.budget,
+            description: project.description,
+            updatedAt: project.updatedAt || new Date().toISOString(),
+            startDate: project.startDate
+          })) || [];
+          setProjects(formattedProjects);
+          
+          // Add project creation to timeline
+          if (formattedProjects.length > 0) {
+            const projectEvents = formattedProjects.map(project => ({
+              id: `project-${project.id}`,
+              type: 'project' as const,
+              content: `Created project "${project.name}"`,
+              createdAt: project.updatedAt,
+              user: {
+                name: 'System',
+                avatar: ''
+              },
+              metadata: {
+                projectId: project.id
+              }
+            }));
+            
+            setTimeline(prev => [...projectEvents, ...prev]);
+          }
         } catch (error) {
           console.error('Error fetching projects:', error);
           setProjects([]);
+          toast({
+            title: 'Error',
+            description: 'Failed to load projects',
+            variant: 'destructive',
+          });
+        } finally {
+          setLoadingProjects(false);
         }
       } catch (error) {
         console.error('Error fetching client:', error);
@@ -224,6 +276,17 @@ const ClientDetailPage = () => {
         updatedAt: new Date().toISOString()
       }
     ]);
+
+    const safeFormatDate = (dateString?: string) => {
+  if (!dateString) return 'No date';
+  try {
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? 'Invalid date' : format(date, 'MMM d, yyyy h:mm a');
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid date';
+  }
+};
     
     // Add to timeline
     setTimeline(prev => [
@@ -253,19 +316,44 @@ const ClientDetailPage = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: string }> = {
-      planning: { label: 'Planning', variant: 'outline' },
-      in_progress: { label: 'In Progress', variant: 'default' },
-      on_hold: { label: 'On Hold', variant: 'secondary' },
-      completed: { label: 'Completed', variant: 'success' },
-      cancelled: { label: 'Cancelled', variant: 'destructive' },
+    const statusMap: Record<string, { label: string; variant: string; color: string }> = {
+      planning: { 
+        label: 'Planning', 
+        variant: 'outline',
+        color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+      },
+      in_progress: { 
+        label: 'In Progress', 
+        variant: 'default',
+        color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
+      },
+      on_hold: { 
+        label: 'On Hold', 
+        variant: 'secondary',
+        color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
+      },
+      completed: { 
+        label: 'Completed', 
+        variant: 'success',
+        color: 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+      },
+      cancelled: { 
+        label: 'Cancelled', 
+        variant: 'destructive',
+        color: 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+      },
     };
     
-    const statusInfo = statusMap[status] || { label: status, variant: 'outline' };
+    const statusInfo = statusMap[status] || { 
+      label: status, 
+      variant: 'outline',
+      color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+    };
+    
     return (
-      <Badge variant={statusInfo.variant as any} className="capitalize">
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color}`}>
         {statusInfo.label}
-      </Badge>
+      </span>
     );
   };
 
@@ -560,7 +648,7 @@ const ClientDetailPage = () => {
                             <div className="flex items-center justify-between">
                               <p className="text-sm font-medium">{event.user?.name || 'System'}</p>
                               <span className="text-xs text-muted-foreground">
-                                {format(new Date(event.createdAt), 'MMM d, h:mm a')}
+                                {formatEventDate(event.createdAt)}
                               </span>
                             </div>
                             <p className="text-sm text-muted-foreground">{event.content}</p>
@@ -600,33 +688,155 @@ const ClientDetailPage = () => {
             </TabsContent>
 
             <TabsContent value="projects" className="space-y-4">
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No projects yet</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    You haven't created any projects for this client yet. Create your first project to get started.
-                  </p>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Project
-                  </Button>
-                </CardContent>
-              </Card>
+              {loadingProjects ? (
+                <div className="flex items-center justify-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : projects.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {projects.map(project => (
+                    <Card key={project.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="w-full">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="font-medium text-base">{project.name}</h3>
+                              {getStatusBadge(project.status)}
+                            </div>
+                            
+                            {project.description && (
+                              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                                {project.description}
+                              </p>
+                            )}
+                            
+                            <div className="mt-3 space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Progress</span>
+                                <span className="font-medium">{project.progress}%</span>
+                              </div>
+                              <Progress value={project.progress} className="h-2" />
+                            </div>
+
+                            <div className="flex justify-between items-center mt-4 text-sm">
+                              <div className="text-muted-foreground">
+                                {project.dueDate && (
+                                  <div className="flex items-center">
+                                    <Calendar className="h-4 w-4 mr-1.5" />
+                                    {format(new Date(project.dueDate), 'MMM d, yyyy')}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="font-medium">
+                                {project.budget ? `$${project.budget.toLocaleString()}` : 'No budget'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No projects yet</h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      You haven't created any projects for this client yet. Create your first project to get started.
+                    </p>
+                    <Button onClick={() => setIsCreateProjectModalOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Project
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="activity" className="space-y-4">
               <Card>
-                <CardContent className="p-8 text-center">
-                  <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No activity recorded</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Start working with this client to see their activity history here.
-                  </p>
-                  <Button variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Log Activity
-                  </Button>
+                <CardHeader className="py-4">
+                  <CardTitle>Activity Timeline</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {timeline.length > 0 ? (
+                    <div className="space-y-6">
+                      {timeline
+                        .sort((a, b) => {
+                          try {
+                            const dateA = new Date(a.createdAt).getTime();
+                            const dateB = new Date(b.createdAt).getTime();
+                            return isNaN(dateB) || isNaN(dateA) ? 0 : dateB - dateA;
+                          } catch (error) {
+                            console.error('Error sorting timeline:', error);
+                            return 0;
+                          }
+                        })
+                        .map(event => {
+                          const eventDate = event.createdAt ? new Date(event.createdAt) : null;
+                          const formattedDate = eventDate && !isNaN(eventDate.getTime()) 
+                            ? format(eventDate, 'MMM d, yyyy h:mm a')
+                            : 'Recent';
+                            
+                          return (
+                            <div key={event.id} className="relative pb-6 last:pb-0">
+                              <div className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></div>
+                              <div className="relative flex items-start space-x-4">
+                                <div className="relative">
+                                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center ring-8 ring-white dark:ring-gray-900">
+                                    {event.type === 'comment' ? (
+                                      <MessageSquareText className="h-4 w-4 text-primary" />
+                                    ) : event.type === 'project' ? (
+                                      <FolderOpen className="h-4 w-4 text-primary" />
+                                    ) : (
+                                      <Activity className="h-4 w-4 text-primary" />
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="text-sm">
+                                    <p className="font-medium text-gray-900 dark:text-white">
+                                      {event.user?.name || 'System'}
+                                      <span className="text-xs text-muted-foreground ml-2">
+                                        {formattedDate}
+                                      </span>
+                                    </p>
+                                    <p className="mt-0.5 text-sm text-muted-foreground">
+                                      {event.content}
+                                    </p>
+                                  </div>
+                                  {event.metadata?.projectId && (
+                                    <div className="mt-2">
+                                      <Link 
+                                        to={`/projects/${event.metadata.projectId}`}
+                                        className="inline-flex items-center text-sm text-primary hover:underline"
+                                      >
+                                        View project <ExternalLink className="ml-1 h-3 w-3" />
+                                      </Link>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    <div className="text-center p-8">
+                      <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No activity recorded</h3>
+                      <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                        Start working with this client to see their activity history here.
+                      </p>
+                      <div className="flex justify-center space-x-2">
+                        <Button variant="outline" onClick={() => setIsCreateProjectModalOpen(true)}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Project
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
