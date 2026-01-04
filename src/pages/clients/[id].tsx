@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { format, isAfter, isBefore, subDays } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { CreateProjectModal } from '@/components/projects/create-project-modal';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -133,6 +134,7 @@ const statusColors = {
 const ClientDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [client, setClient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
@@ -140,7 +142,7 @@ const ClientDetailPage = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [isSecondaryPanelOpen, setIsSecondaryPanelOpen] = useState(false);
-  const { toast } = useToast();
+  const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
 
   const toggleSecondaryPanel = () => {
     setIsSecondaryPanelOpen(!isSecondaryPanelOpen);
@@ -205,6 +207,49 @@ const ClientDetailPage = () => {
     setComment('');
     
     // TODO: Save comment to API
+  };
+
+  const handleProjectCreated = (newProject: any) => {
+    // Add the new project to the projects list
+    setProjects(prevProjects => [
+      ...prevProjects,
+      {
+        id: newProject.id,
+        name: newProject.projectName,
+        status: newProject.status,
+        progress: newProject.progress || 0,
+        dueDate: newProject.endDate,
+        budget: newProject.budget,
+        description: newProject.description,
+        updatedAt: new Date().toISOString()
+      }
+    ]);
+    
+    // Add to timeline
+    setTimeline(prev => [
+      {
+        id: `project-${Date.now()}`,
+        type: 'project',
+        content: `Created project "${newProject.projectName}"`,
+        createdAt: new Date().toISOString(),
+        user: {
+          name: 'You',
+          avatar: ''
+        },
+        metadata: {
+          projectId: newProject.id
+        }
+      },
+      ...prev
+    ]);
+    
+    toast({
+      title: 'Project created',
+      description: `Project "${newProject.projectName}" has been created successfully.`,
+      variant: 'default'
+    });
+    
+    setIsCreateProjectModalOpen(false);
   };
 
   const getStatusBadge = (status: string) => {
@@ -293,316 +338,298 @@ const ClientDetailPage = () => {
   }
 
   return (
-  <div className="container mx-auto px-4 py-4 relative">
-    <div className="relative">
-      {/* Main content goes here */}
-      <div className="space-y-4">
-        {/* Header with client info and actions */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-8 w-8">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold">{client.name}</h1>
-              <p className="text-sm text-muted-foreground">
-                {client.title || 'No title'}{client.company ? ` • ${client.company}` : ''}
-              </p>
+    <div className="container mx-auto px-4 py-4 relative">
+      <div className="relative">
+        {/* Main content goes here */}
+        <div className="space-y-4">
+          {/* Header with client info and actions */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">{client.name}</h1>
+            <div className="flex items-center space-x-2">
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={() => setIsCreateProjectModalOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Project
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate('/clients')}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Clients
+              </Button>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Project
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={toggleSecondaryPanel}
-              className="flex items-center"
-            >
-              {isSecondaryPanelOpen ? (
-                <>
-                  <X className="h-4 w-4 mr-2" />
-                  Hide Details
-                </>
-              ) : (
-                <>
-                  <User className="h-4 w-4 mr-2" />
-                  Show Details
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
 
-        {/* Tabs for different sections */}
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="w-full justify-start bg-transparent p-0 border-b rounded-none">
-            <TabsTrigger 
-              value="overview" 
-              className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2 h-auto"
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger 
-              value="projects" 
-              className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2 h-auto"
-            >
-              <FolderOpen className="h-4 w-4 mr-2" />
-              Projects
-            </TabsTrigger>
-            <TabsTrigger 
-              value="activity" 
-              className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2 h-auto"
-            >
-              <Activity className="h-4 w-4 mr-2" />
-              Activity
-            </TabsTrigger>
-          </TabsList>
+          {/* Tabs for different sections */}
+          <Tabs defaultValue="overview" className="space-y-4">
+            <TabsList className="w-full justify-start bg-transparent p-0 border-b rounded-none">
+              <TabsTrigger 
+                value="overview" 
+                className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2 h-auto"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="projects" 
+                className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2 h-auto"
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Projects
+              </TabsTrigger>
+              <TabsTrigger 
+                value="activity" 
+                className="data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-2 h-auto"
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                Activity
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            {/* Key Metrics */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Projects</p>
-                      <h3 className="text-2xl font-bold mt-1">{projects?.length || 0}</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {projects?.filter(p => p?.status === 'completed').length || 0} completed
-                      </p>
+            <TabsContent value="overview" className="space-y-6">
+              {/* Key Metrics */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Total Projects</p>
+                        <h3 className="text-2xl font-bold mt-1">{projects?.length || 0}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {projects?.filter(p => p?.status === 'completed').length || 0} completed
+                        </p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                        <FolderOpen className="h-5 w-5" />
+                      </div>
                     </div>
-                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                      <FolderOpen className="h-5 w-5" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
-                      <h3 className="text-2xl font-bold mt-1">
-                        {projects?.filter(p => p?.status === 'in_progress').length || 0}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {projects?.filter(p => p?.status === 'in_progress').length || 0} in progress
-                      </p>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
+                        <h3 className="text-2xl font-bold mt-1">
+                          {projects?.filter(p => p?.status === 'in_progress').length || 0}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {projects?.filter(p => p?.status === 'in_progress').length || 0} in progress
+                        </p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
+                        <TrendingUp className="h-5 w-5" />
+                      </div>
                     </div>
-                    <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
-                      <TrendingUp className="h-5 w-5" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                      <h3 className="text-2xl font-bold mt-1">
-                        ${(projects?.reduce((sum, p) => sum + (p?.budget || 0), 0) || 0).toLocaleString()}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        From {projects?.length || 0} projects
-                      </p>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                        <h3 className="text-2xl font-bold mt-1">
+                          ${(projects?.reduce((sum, p) => sum + (p?.budget || 0), 0) || 0).toLocaleString()}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          From {projects?.length || 0} projects
+                        </p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400">
+                        <CircleDollarSign className="h-5 w-5" />
+                      </div>
                     </div>
-                    <div className="p-2 rounded-lg bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400">
-                      <CircleDollarSign className="h-5 w-5" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Client Since</p>
-                      <h3 className="text-2xl font-bold mt-1">
-                        {client?.createdAt ? format(new Date(client.createdAt), 'MMM yyyy') : 'N/A'}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {client?.yearsWithUs || 'Less than a'} year{client?.yearsWithUs > 1 ? 's' : ''} with us
-                      </p>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Client Since</p>
+                        <h3 className="text-2xl font-bold mt-1">
+                          {client?.createdAt ? format(new Date(client.createdAt), 'MMM yyyy') : 'N/A'}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {client?.yearsWithUs || 'Less than a'} year{client?.yearsWithUs > 1 ? 's' : ''} with us
+                        </p>
+                      </div>
+                      <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
+                        <Calendar className="h-5 w-5" />
+                      </div>
                     </div>
-                    <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
-                      <Calendar className="h-5 w-5" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-            {/* Projects & Tasks */}
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <CardTitle className="text-lg">Recent Projects</CardTitle>
-                  {projects?.length > 0 && (
+              {/* Projects & Tasks */}
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between py-4">
+                    <CardTitle className="text-lg">Recent Projects</CardTitle>
+                    {projects?.length > 0 && (
+                      <Button variant="ghost" size="sm" className="text-primary h-8">
+                        View All
+                      </Button>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {projects?.length > 0 ? (
+                      <div className="space-y-4">
+                        {projects.slice(0, 3).map(project => (
+                          <div key={project.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{project.name}</h4>
+                                <div className="flex items-center mt-1 space-x-2">
+                                  <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[project.status]}`}>
+                                    {project.status.replace('_', ' ')}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {project.dueDate ? `Due ${format(new Date(project.dueDate), 'MMM d')}` : 'No deadline'}
+                                  </span>
+                                </div>
+                                <Progress value={project.progress} className="h-2 mt-2" />
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center p-6 border rounded-lg">
+                        <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                        <h3 className="text-sm font-medium mb-1">No projects yet</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Create your first project to get started</p>
+                        <Button size="sm">
+                          <Plus className="mr-2 h-4 w-4" />
+                          New Project
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between py-4">
+                    <CardTitle className="text-lg">Upcoming Tasks</CardTitle>
                     <Button variant="ghost" size="sm" className="text-primary h-8">
                       View All
                     </Button>
-                  )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center p-6 border rounded-lg">
+                      <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                      <h3 className="text-sm font-medium mb-1">No tasks yet</h3>
+                      <p className="text-sm text-muted-foreground mb-4">Add tasks to keep track of your work</p>
+                      <Button variant="outline" size="sm">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Task
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recent Activity */}
+              <Card>
+                <CardHeader className="py-4">
+                  <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {projects?.length > 0 ? (
+                  {timeline.length > 0 ? (
                     <div className="space-y-4">
-                      {projects.slice(0, 3).map(project => (
-                        <div key={project.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h4 className="font-medium">{project.name}</h4>
-                              <div className="flex items-center mt-1 space-x-2">
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[project.status]}`}>
-                                  {project.status.replace('_', ' ')}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {project.dueDate ? `Due ${format(new Date(project.dueDate), 'MMM d')}` : 'No deadline'}
-                                </span>
-                              </div>
-                              <Progress value={project.progress} className="h-2 mt-2" />
+                      {timeline.slice(0, 5).map(event => (
+                        <div key={event.id} className="flex items-start space-x-3">
+                          <div className="p-2 rounded-lg bg-accent">
+                            {event.type === 'comment' ? (
+                              <MessageSquareText className="h-4 w-4" />
+                            ) : event.type === 'status_change' ? (
+                              <RefreshCw className="h-4 w-4" />
+                            ) : (
+                              <FileText className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium">{event.user?.name || 'System'}</p>
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(event.createdAt), 'MMM d, h:mm a')}
+                              </span>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
+                            <p className="text-sm text-muted-foreground">{event.content}</p>
+                            {event.metadata && (
+                              <div className="mt-1 text-xs text-muted-foreground">
+                                {event.metadata.from && event.metadata.to && (
+                                  <span>
+                                    Changed from <span className="font-medium">{event.metadata.from}</span> to{' '}
+                                    <span className="font-medium">{event.metadata.to}</span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
                     <div className="text-center p-6 border rounded-lg">
-                      <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                      <h3 className="text-sm font-medium mb-1">No projects yet</h3>
-                      <p className="text-sm text-muted-foreground mb-4">Create your first project to get started</p>
-                      <Button size="sm">
-                        <Plus className="mr-2 h-4 w-4" />
-                        New Project
-                      </Button>
+                      <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                      <h3 className="text-sm font-medium mb-1">No activity yet</h3>
+                      <p className="text-sm text-muted-foreground mb-4">Interact with this client to see activity here</p>
+                      <div className="flex justify-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Mail className="mr-2 h-4 w-4" />
+                          Send Email
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Phone className="mr-2 h-4 w-4" />
+                          Log Call
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
 
+            <TabsContent value="projects" className="space-y-4">
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between py-4">
-                  <CardTitle className="text-lg">Upcoming Tasks</CardTitle>
-                  <Button variant="ghost" size="sm" className="text-primary h-8">
-                    View All
+                <CardContent className="p-8 text-center">
+                  <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No projects yet</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    You haven't created any projects for this client yet. Create your first project to get started.
+                  </p>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Project
                   </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center p-6 border rounded-lg">
-                    <ClipboardList className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                    <h3 className="text-sm font-medium mb-1">No tasks yet</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Add tasks to keep track of your work</p>
-                    <Button variant="outline" size="sm">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Task
-                    </Button>
-                  </div>
                 </CardContent>
               </Card>
-            </div>
+            </TabsContent>
 
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader className="py-4">
-                <CardTitle>Recent Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {timeline.length > 0 ? (
-                  <div className="space-y-4">
-                    {timeline.slice(0, 5).map(event => (
-                      <div key={event.id} className="flex items-start space-x-3">
-                        <div className="p-2 rounded-lg bg-accent">
-                          {event.type === 'comment' ? (
-                            <MessageSquareText className="h-4 w-4" />
-                          ) : event.type === 'status_change' ? (
-                            <RefreshCw className="h-4 w-4" />
-                          ) : (
-                            <FileText className="h-4 w-4" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium">{event.user?.name || 'System'}</p>
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(event.createdAt), 'MMM d, h:mm a')}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{event.content}</p>
-                          {event.metadata && (
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              {event.metadata.from && event.metadata.to && (
-                                <span>
-                                  Changed from <span className="font-medium">{event.metadata.from}</span> to{' '}
-                                  <span className="font-medium">{event.metadata.to}</span>
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center p-6 border rounded-lg">
-                    <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                    <h3 className="text-sm font-medium mb-1">No activity yet</h3>
-                    <p className="text-sm text-muted-foreground mb-4">Interact with this client to see activity here</p>
-                    <div className="flex justify-center space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Email
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Phone className="mr-2 h-4 w-4" />
-                        Log Call
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="projects" className="space-y-4">
-            <Card>
-              <CardContent className="p-8 text-center">
-                <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No projects yet</h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  You haven't created any projects for this client yet. Create your first project to get started.
-                </p>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Project
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="activity" className="space-y-4">
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No activity recorded</h3>
-                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Start working with this client to see their activity history here.
-                </p>
-                <Button variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Log Activity
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="activity" className="space-y-4">
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No activity recorded</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Start working with this client to see their activity history here.
+                  </p>
+                  <Button variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Log Activity
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
@@ -621,6 +648,19 @@ const ClientDetailPage = () => {
         isOpen={isSecondaryPanelOpen} 
         onToggle={toggleSecondaryPanel} 
       />
+
+      {/* Create Project Modal */}
+      {client && (
+        <CreateProjectModal
+          isOpen={isCreateProjectModalOpen}
+          onClose={() => setIsCreateProjectModalOpen(false)}
+          onSave={handleProjectCreated}
+          initialData={{
+            clientId: client.id,
+            clientName: client.name
+          }}
+        />
+      )}
     </div>
   );
 };
