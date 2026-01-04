@@ -358,7 +358,7 @@ const ClientDetailPage = () => {
   };
 
   const renderProjectCard = (project: Project) => (
-    <Card key={project.id} className="hover:shadow-md transition-shadow">
+    <Card key={project.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/projects/${project.id}`)}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div>
@@ -695,7 +695,11 @@ const ClientDetailPage = () => {
               ) : projects.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {projects.map(project => (
-                    <Card key={project.id} className="hover:shadow-md transition-shadow">
+                    <Card 
+                      key={project.id} 
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                    >
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start">
                           <div className="w-full">

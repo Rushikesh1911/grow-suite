@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, query, where, Timestamp } from 'firebase/firestore';
 import { db } from '@/config/firebase';
 
 export type ProjectStatus = 'planning' | 'in-progress' | 'review' | 'completed' | 'on-hold' | 'cancelled';
@@ -55,6 +55,31 @@ export const getUserProjects = async (userId: string): Promise<Project[]> => {
   }
 };
 
+/**
+ * Get a single project by ID
+ */
+export const getProjectById = async (projectId: string): Promise<Project | null> => {
+  try {
+    const projectDoc = await getDoc(doc(db, PROJECTS_COLLECTION, projectId));
+    
+    if (!projectDoc.exists()) {
+      return null;
+    }
+    
+    return {
+      id: projectDoc.id,
+      ...projectDoc.data(),
+      // Convert Firestore timestamps to Date objects if they exist
+      createdAt: projectDoc.data().createdAt?.toDate() || new Date(),
+      updatedAt: projectDoc.data().updatedAt?.toDate() || new Date(),
+    } as Project;
+  } catch (error) {
+    console.error('Error fetching project:', error);
+    throw new Error('Failed to fetch project');
+  }
+};
+
 export const projectService = {
   getUserProjects,
+  getProjectById,
 };

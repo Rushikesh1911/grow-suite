@@ -3,7 +3,7 @@ import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors , closest
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable  } from '@dnd-kit/sortable';
 import { createPortal } from 'react-dom';
-import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList, CalendarDays, X, Edit, Trash2, Share2, Copy, Archive, Tag } from 'lucide-react';
+import { Plus, MoreVertical, MessageSquare, Paperclip, User, Clock, CheckCircle, Circle, AlertCircle, Check, ClipboardList, Calendar, CalendarDays, X, Edit, Trash2, Share2, Copy, Archive, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
