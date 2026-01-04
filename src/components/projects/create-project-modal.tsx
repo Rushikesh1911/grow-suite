@@ -25,7 +25,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui/toast';
-import { auth } from '@/config/firebase';
+import { auth, db } from '@/config/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ type ProjectStatus = 'planning' | 'in-progress' | 'on-hold' | 'completed' | 'can
 type Priority = 'low' | 'medium' | 'high' | 'urgent';
 
 type ProjectData = {
+  id?: string;
   // Basic Info
   projectName: string;
   projectCode: string;
@@ -46,11 +48,11 @@ type ProjectData = {
   
   // Timeline
   startDate: string;
-  dueDate: string;
-  estimatedHours: string;
+  dueDate: string | null;
+  estimatedHours: number | string;
   
   // Budget & Billing
-  budget: string;
+  budget: number | string;
   currency: string;
   billingMethod: 'fixed' | 'hourly' | 'milestone';
   
@@ -61,10 +63,13 @@ type ProjectData = {
   // Team
   teamMembers: string[];
   projectManager: string;
+  createdBy?: string;
   
   // Additional
   tags: string[];
   notes: string;
+  createdAt?: any;
+  updatedAt?: any;
 };
 
 const STATUS_OPTIONS = [
@@ -161,10 +166,30 @@ export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectMod
     setIsSaving(true);
 
     try {
-      // Here you would typically make an API call to save the project
-      // For now, we'll just call the onSave callback with the form data
+      // Add project to Firestore
+      const projectRef = await addDoc(collection(db, 'projects'), {
+        ...formData,
+        createdBy: currentUser.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        status: formData.status || 'planning',
+        priority: formData.priority || 'medium',
+        teamMembers: formData.teamMembers || [],
+        tags: formData.tags || [],
+        // Convert string numbers to numbers where needed
+        budget: formData.budget ? Number(formData.budget) : 0,
+        estimatedHours: formData.estimatedHours ? Number(formData.estimatedHours) : 0,
+        // Add timestamps
+        startDate: formData.startDate,
+        dueDate: formData.dueDate || null,
+      });
+      
+      // Call the onSave callback with the new project data including the ID
       if (onSave) {
-        onSave(formData);
+        onSave({
+          id: projectRef.id,
+          ...formData
+        });
       }
       
       toast({
@@ -189,7 +214,7 @@ export function CreateProjectModal({ isOpen, onClose, onSave }: CreateProjectMod
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-56 pr-4">
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
