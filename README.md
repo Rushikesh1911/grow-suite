@@ -61,7 +61,7 @@ GrowSuite is a modern, responsive, and feature-rich Customer Relationship Manage
 ### Frontend
 - **Framework**: React 18 with TypeScript
 - **Build Tool**: Vite 4.4
-- **Styling**: Tailwind CSS 3.3 + Framer Motion
+- **Styling**: Tailwind CSS 3.3 + Framer Motion + shadcn ui
 - **State Management**: React Context API + Redux Toolkit
 - **Form Handling**: React Hook Form + Zod
 - **Icons**: Lucide Icons
