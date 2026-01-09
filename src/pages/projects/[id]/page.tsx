@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { ProjectHeader } from '@/components/project/project-header';
 import { ProjectOverview } from '@/components/project/project-overview';
@@ -9,59 +9,50 @@ import { ProjectTasks } from '@/components/project/project-tasks';
 import { ProjectTimeline } from '@/components/project/project-timeline';
 import { ProjectActivity } from '@/components/project/project-activity';
 import { ProjectDocuments } from '@/components/project/project-documents';
-import { Project } from '@/lib/project';
+import type { Project } from '@/lib/project';
+import { getProjectById } from '@/lib/project';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 export default function ProjectDetailPage() {
   const { id } = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate API fetch
-    const fetchProject = async () => {
+    const fetchProjectData = async () => {
+      if (!id) return;
+      
       try {
-        // Replace with actual API call
-        // const data = await getProjectById(id as string);
-        // setProject(data);
+        setIsLoading(true);
+        setError(null);
         
-        // Mock data for now
-        setTimeout(() => {
-          setProject({
-            id: id as string,
-            name: 'Website Redesign',
-            description: 'Complete redesign of the company website with modern UI/UX and improved performance.',
-            status: 'in-progress',
-            priority: 'high',
-            startDate: new Date('2024-01-15'),
-            dueDate: new Date('2024-03-30'),
-            progress: 65,
-            clientName: 'Acme Corp',
-            budget: 15000,
-            estimatedHours: 320,
-            completedTasks: 13,
-            totalTasks: 20,
-            tags: ['design', 'development', 'marketing'],
-            teamMembers: [
-              { userId: '1', name: 'Alex Johnson', role: 'Project Manager', avatar: '' },
-              { userId: '2', name: 'Sam Wilson', role: 'UI/UX Designer', avatar: '' },
-              { userId: '3', name: 'Jordan Lee', role: 'Frontend Developer', avatar: '' },
-              { userId: '4', name: 'Taylor Smith', role: 'Backend Developer', avatar: '' },
-            ],
-            createdBy: '1',
-            createdAt: new Date('2024-01-10'),
-            updatedAt: new Date(),
-          });
-          setIsLoading(false);
-        }, 1000);
-      } catch (error) {
-        console.error('Error fetching project:', error);
+        // Fetch real project data from Firebase
+        const data = await getProjectById(id as string);
+        setProject(data);
+        
+        if (!data) {
+          setError('Project not found');
+        }
+      } catch (err) {
+        console.error('Error fetching project:', err);
+        setError('Failed to load project. Please try again.');
+      } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProject();
+    fetchProjectData();
   }, [id]);
+
+  const handleRetry = () => {
+    setError(null);
+    setIsLoading(true);
+    // Re-run the fetch logic by triggering useEffect
+  };
 
   if (isLoading) {
     return (
@@ -85,10 +76,28 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Project not found</h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">The project you're looking for doesn't exist or you don't have permission to view it.</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center max-w-md">
+            <div className="rounded-full bg-muted p-3 mb-4 mx-auto w-fit">
+              <AlertCircle className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              {error || 'Project not found'}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {error 
+                ? 'There was an error loading this project. Please try again.'
+                : 'The project you\'re looking for doesn\'t exist or you don\'t have permission to view it.'
+              }
+            </p>
+            {error && (
+              <Button onClick={handleRetry} variant="outline">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -106,7 +115,7 @@ export default function ProjectDetailPage() {
           <ProjectOverview project={project} />
           
           {/* Project Tasks */}
-          <ProjectTasks projectId={project.id} />
+          <ProjectTasks projectId={project.id} project={project} />
           
           {/* Project Timeline */}
           <ProjectTimeline project={project} />
@@ -115,7 +124,11 @@ export default function ProjectDetailPage() {
         {/* Right Column */}
         <div className="space-y-6">
           {/* Project Team */}
-          <ProjectTeam teamMembers={project.teamMembers || []} />
+          <ProjectTeam 
+            teamMembers={project.teamMembers || []} 
+            isLoading={isLoading}
+            error={error}
+          />
           
           {/* Project Activity */}
           <ProjectActivity projectId={project.id} />

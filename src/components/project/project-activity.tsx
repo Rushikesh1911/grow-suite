@@ -2,15 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Plus } from 'lucide-react';
+import { MessageSquare, Plus, Activity, FileText, Users, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useState, useEffect } from 'react';
+import type { Activity as ActivityType } from '@/lib/activity';
+import { getProjectActivities } from '@/lib/activity';
 
 interface Activity {
   id: string;
-  user: {
-    name: string;
-    avatar?: string;
-    email: string;
-  };
+  userName: string;
+  userAvatar?: string;
+  userEmail: string;
   action: string;
   target?: string;
   targetType?: string;
@@ -18,74 +21,38 @@ interface Activity {
   read?: boolean;
 }
 
-// Mock data - replace with actual data fetching
-const mockActivities: Activity[] = [
-  {
-    id: '1',
-    user: {
-      name: 'Alex Johnson',
-      email: 'alex@example.com',
-      avatar: '',
-    },
-    action: 'created',
-    target: 'Website Redesign',
-    targetType: 'project',
-    timestamp: '2024-02-28T14:30:00Z',
-    read: true,
-  },
-  {
-    id: '2',
-    user: {
-      name: 'Sam Wilson',
-      email: 'sam@example.com',
-      avatar: '',
-    },
-    action: 'uploaded',
-    target: 'homepage-wireframes.pdf',
-    targetType: 'file',
-    timestamp: '2024-02-28T15:45:00Z',
-    read: true,
-  },
-  {
-    id: '3',
-    user: {
-      name: 'Jordan Lee',
-      email: 'jordan@example.com',
-      avatar: '',
-    },
-    action: 'commented',
-    target: 'I think we should consider a different color scheme for the dashboard',
-    targetType: 'comment',
-    timestamp: '2024-02-28T16:20:00Z',
-    read: false,
-  },
-  {
-    id: '4',
-    user: {
-      name: 'Taylor Smith',
-      email: 'taylor@example.com',
-      avatar: '',
-    },
-    action: 'updated',
-    target: 'User authentication flow',
-    targetType: 'task',
-    timestamp: '2024-02-29T09:15:00Z',
-    read: false,
-  },
-  {
-    id: '5',
-    user: {
-      name: 'Alex Johnson',
-      email: 'alex@example.com',
-      avatar: '',
-    },
-    action: 'changed status',
-    target: 'Project',
-    targetType: 'status',
-    timestamp: '2024-02-29T10:30:00Z',
-    read: true,
-  },
-];
+export function ProjectActivity({ projectId }: { projectId: string }) {
+  const [activities, setActivities] = useState<ActivityType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const projectActivities = await getProjectActivities(projectId, 20);
+        setActivities(projectActivities);
+      } catch (err) {
+        console.error('Error fetching activities:', err);
+        // Only set error if it's a real error, not just empty data or index requirements
+        if (err instanceof Error && 
+            !err.message.includes('No documents to fetch') && 
+            !err.message.includes('requires an index')) {
+          setError('Failed to load activities. Please try again.');
+        } else {
+          // Empty data or index requirement is not an error for the user
+          setActivities([]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (projectId) {
+      fetchActivities();
+    }
+  }, [projectId]);
 
 const getActionIcon = (action: string) => {
   switch (action) {
@@ -155,41 +122,78 @@ const formatActivityMessage = (activity: Activity) => {
     case 'commented':
       return (
         <span>
-          <span className="font-medium">{activity.user.name}</span> commented: "{target}"
+          <span className="font-medium">{activity.userName}</span> commented: "{target}"
         </span>
       );
     case 'created':
       return (
         <span>
-          <span className="font-medium">{activity.user.name}</span> created the {targetType}
+          <span className="font-medium">{activity.userName}</span> created the {targetType}
         </span>
       );
     case 'uploaded':
       return (
         <span>
-          <span className="font-medium">{activity.user.name}</span> uploaded a new file: {target}
+          <span className="font-medium">{activity.userName}</span> uploaded a new file: {target}
         </span>
       );
     case 'updated':
       return (
         <span>
-          <span className="font-medium">{activity.user.name}</span> updated {targetType}: {target}
+          <span className="font-medium">{activity.userName}</span> updated {targetType}: {target}
         </span>
       );
     case 'changed status':
       return (
         <span>
-          <span className="font-medium">{activity.user.name}</span> changed the project status
+          <span className="font-medium">{activity.userName}</span> changed the project status
         </span>
       );
     default:
-      return `${activity.user.name} ${action} ${targetType}`;
+      return `${activity.userName} ${action} ${targetType}`;
   }
 };
 
-export function ProjectActivity({ projectId }: { projectId: string }) {
-  const activities = mockActivities; // In a real app, fetch based on projectId
-  
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-8 w-16" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-start space-x-3">
+                <Skeleton className="h-8 w-8 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -215,9 +219,9 @@ export function ProjectActivity({ projectId }: { projectId: string }) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center">
                     <Avatar className="h-8 w-8 mr-2">
-                      <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
+                      <AvatarImage src={activity.userAvatar} alt={activity.userName} />
                       <AvatarFallback className="text-xs">
-                        {activity.user.name
+                        {activity.userName
                           .split(' ')
                           .map((n) => n[0])
                           .join('')
@@ -242,22 +246,52 @@ export function ProjectActivity({ projectId }: { projectId: string }) {
             ))}
           </div>
         ) : (
-          <div className="py-6 text-center">
-            <p className="text-sm text-muted-foreground">No recent activity</p>
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="rounded-full bg-muted p-4 mb-4">
+              <Activity className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">No activity yet</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+              Project activity will appear here as you and your team work on tasks, share files, and collaborate.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="bg-muted/50 rounded-lg p-3">
+                <FileText className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs font-medium">Task Updates</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3">
+                <MessageSquare className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs font-medium">Comments</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3">
+                <Users className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs font-medium">Team Changes</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3">
+                <CheckCircle className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs font-medium">Milestones</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Start Collaboration
+            </Button>
           </div>
         )}
         
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t"></div>
+        {activities.length > 0 && (
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <Button variant="ghost" size="sm" className="bg-background px-2 text-xs text-muted-foreground">
+                <MessageSquare className="mr-2 h-3.5 w-3.5" />
+                Add a comment
+              </Button>
+            </div>
           </div>
-          <div className="relative flex justify-center">
-            <Button variant="ghost" size="sm" className="bg-background px-2 text-xs text-muted-foreground">
-              <MessageSquare className="mr-2 h-3.5 w-3.5" />
-              Add a comment
-            </Button>
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

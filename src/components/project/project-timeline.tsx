@@ -1,67 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Clock, AlertCircle, Plus, Calendar as CalendarIcon } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, Plus, Calendar as CalendarIcon, Target, Users, FileText, Package } from 'lucide-react';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useState, useEffect } from 'react';
+import { AlertCircle as AlertCircleIcon } from 'lucide-react';
+import type { TimelineEvent } from '@/lib/timeline';
+import { getProjectTimeline } from '@/lib/timeline';
+import type { Project } from '@/lib/project';
 
-interface TimelineEvent {
-  id: string;
-  title: string;
-  description?: string;
-  date: Date | string;
-  status: 'completed' | 'in-progress' | 'upcoming' | 'delayed';
-  type: 'milestone' | 'task' | 'meeting' | 'delivery';
-}
-
-// Mock data - replace with actual data fetching
-const mockTimeline: TimelineEvent[] = [
-  {
-    id: '1',
-    title: 'Project Kickoff',
-    description: 'Initial meeting with the client to discuss project requirements',
-    date: '2024-01-15',
-    status: 'completed',
-    type: 'meeting',
-  },
-  {
-    id: '2',
-    title: 'UI/UX Design Phase',
-    description: 'Complete wireframes and design mockups',
-    date: '2024-01-25',
-    status: 'completed',
-    type: 'milestone',
-  },
-  {
-    id: '3',
-    title: 'Development Sprint 1',
-    description: 'Implement core features and authentication',
-    date: '2024-02-15',
-    status: 'completed',
-    type: 'task',
-  },
-  {
-    id: '4',
-    title: 'Client Review',
-    description: 'Present initial version to client for feedback',
-    date: '2024-02-25',
-    status: 'in-progress',
-    type: 'meeting',
-  },
-  {
-    id: '5',
-    title: 'Development Sprint 2',
-    description: 'Implement feedback and additional features',
-    date: '2024-03-10',
-    status: 'upcoming',
-    type: 'task',
-  },
-  {
-    id: '6',
-    title: 'Final Delivery',
-    description: 'Project handover and deployment',
-    date: '2024-03-30',
-    status: 'upcoming',
-    type: 'delivery',
-  },
-];
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -91,69 +39,183 @@ const getEventTypeColor = (type: string) => {
   }
 };
 
-export function ProjectTimeline({ project }: { project: any }) {
+export function ProjectTimeline({ project }: { project: Project }) {
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTimeline = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const projectTimeline = await getProjectTimeline(project.id);
+        setTimeline(projectTimeline);
+      } catch (err) {
+        console.error('Error fetching timeline:', err);
+        // Only set error if it's a real error, not just empty data or index requirements
+        if (err instanceof Error && 
+            !err.message.includes('No documents to fetch') && 
+            !err.message.includes('requires an index')) {
+          setError('Failed to load timeline. Please try again.');
+        } else {
+          // Empty data or index requirement is not an error for the user
+          setTimeline([]);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (project.id) {
+      fetchTimeline();
+    }
+  }, [project.id]);
+
+  if (isLoading) {
+    return (
+      <Card className="mt-6">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-9 w-24" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="relative pl-10">
+                <Skeleton className="absolute left-0 top-1 h-8 w-8 rounded-full" />
+                <div className="rounded-lg border p-4">
+                  <Skeleton className="h-5 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-lg">Project Timeline</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircleIcon className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
   return (
     <Card className="mt-6">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg">Project Timeline</CardTitle>
-        <button className="inline-flex items-center justify-center text-sm font-medium text-primary hover:underline">
+        <Button variant="ghost" size="sm">
           <Plus className="mr-1 h-4 w-4" />
           Add Event
-        </button>
+        </Button>
       </CardHeader>
       <CardContent>
-        <div className="relative">
-          {/* Timeline line */}
-          <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
-          
-          {/* Timeline events */}
-          <div className="space-y-8">
-            {mockTimeline.map((event, index) => (
-              <div key={event.id} className="relative pl-10">
-                {/* Timeline dot and line */}
-                <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-background">
-                  {getStatusIcon(event.status)}
-                </div>
-                
-                {/* Event card */}
-                <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium">{event.title}</h3>
-                      {event.description && (
-                        <p className="mt-1 text-sm text-muted-foreground">{event.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getEventTypeColor(event.type)}`}>
-                        {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+        {timeline.length > 0 ? (
+          <div className="relative">
+            {/* Timeline line */}
+            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+            
+            {/* Timeline events */}
+            <div className="space-y-8">
+              {timeline.map((event, index) => (
+                <div key={event.id} className="relative pl-10">
+                  {/* Timeline dot and line */}
+                  <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-background">
+                    {getStatusIcon(event.status)}
+                  </div>
+                  
+                  {/* Event card */}
+                  <div className="rounded-lg border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-medium">{event.title}</h3>
+                        {event.description && (
+                          <p className="mt-1 text-sm text-muted-foreground">{event.description}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getEventTypeColor(event.type)}`}>
+                          {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
+                        </div>
                       </div>
                     </div>
+                    <div className="mt-3 flex items-center text-sm text-muted-foreground">
+                      <CalendarIcon className="mr-1 h-4 w-4" />
+                      {format(new Date(event.date), 'MMM d, yyyy')}
+                    </div>
                   </div>
-                  <div className="mt-3 flex items-center text-sm text-muted-foreground">
-                    <CalendarIcon className="mr-1 h-4 w-4" />
-                    {format(new Date(event.date), 'MMM d, yyyy')}
-                  </div>
+                  
+                  {/* Connect line between events */}
+                  {index < timeline.length - 1 && (
+                    <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -translate-y-4"></div>
+                  )}
                 </div>
-                
-                {/* Connect line between events */}
-                {index < mockTimeline.length - 1 && (
-                  <div className="absolute left-4 top-8 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700 -translate-y-4"></div>
-                )}
+              ))}
+            </div>
+            
+            {/* View all events button */}
+            {timeline.length > 5 && (
+              <div className="mt-6 text-center">
+                <Button variant="ghost" size="sm">
+                  View Full Timeline
+                  <svg className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
               </div>
-            ))}
+            )}
           </div>
-          
-          {/* View all events button */}
-          <div className="mt-6 text-center">
-            <button className="inline-flex items-center text-sm font-medium text-primary hover:underline">
-              View Full Timeline
-              <svg className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="rounded-full bg-muted p-4 mb-4">
+              <CalendarIcon className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-medium mb-2">No timeline events yet</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-sm">
+              Create a timeline to track project milestones, meetings, and important dates.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="bg-muted/50 rounded-lg p-3">
+                <Target className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs font-medium">Milestones</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3">
+                <Users className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs font-medium">Meetings</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3">
+                <FileText className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs font-medium">Tasks</p>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-3">
+                <Package className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <p className="text-xs font-medium">Deliverables</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button size="sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Timeline
+              </Button>
+              <Button variant="outline" size="sm">
+                <Target className="mr-2 h-4 w-4" />
+                Add Milestone
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
