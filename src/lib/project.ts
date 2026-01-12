@@ -42,13 +42,32 @@ export const getUserProjects = async (userId: string): Promise<Project[]> => {
     const q = query(projectsRef, where('createdBy', '==', userId));
     const querySnapshot = await getDocs(q);
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      // Convert Firestore timestamps to Date objects if they exist
-      createdAt: doc.data().createdAt?.toDate() || new Date(),
-      updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-    })) as Project[];
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        // Map Firebase field names to TypeScript interface
+        name: data.projectName || data.projectname || data.name || 'Untitled Project',
+        description: data.description,
+        status: data.status || 'planning',
+        priority: data.priority || 'medium',
+        startDate: data.startDate || new Date(),
+        dueDate: data.dueDate || null,
+        progress: data.progress || 0,
+        clientId: data.clientId,
+        clientName: data.clientName || data.clientname || '',
+        budget: data.budget,
+        estimatedHours: data.estimatedHours,
+        completedTasks: data.completedTasks,
+        totalTasks: data.totalTasks,
+        tags: data.tags || [],
+        teamMembers: data.teamMembers || [],
+        createdBy: data.createdBy || '',
+        // Convert Firestore timestamps to Date objects if they exist
+        createdAt: data.createdAt?.toDate() || new Date(),
+        updatedAt: data.updatedAt?.toDate() || new Date(),
+      } as Project;
+    });
   } catch (error) {
     console.error('Error fetching user projects:', error);
     throw new Error('Failed to fetch projects');
@@ -66,12 +85,35 @@ export const getProjectById = async (projectId: string): Promise<Project | null>
       return null;
     }
     
+    const data = projectDoc.data();
+    
+    // Debug logging to see what fields are available
+    console.log('Firebase project data:', data);
+    console.log('projectname field:', data.projectname);
+    console.log('name field:', data.name);
+    
     return {
       id: projectDoc.id,
-      ...projectDoc.data(),
+      // Map Firebase field names to TypeScript interface
+      name: data.projectName || data.projectname || data.name || 'Untitled Project',
+      description: data.description,
+      status: data.status || 'planning',
+      priority: data.priority || 'medium',
+      startDate: data.startDate || new Date(),
+      dueDate: data.dueDate || null,
+      progress: data.progress || 0,
+      clientId: data.clientId,
+      clientName: data.clientName || data.clientname || '',
+      budget: data.budget,
+      estimatedHours: data.estimatedHours,
+      completedTasks: data.completedTasks,
+      totalTasks: data.totalTasks,
+      tags: data.tags || [],
+      teamMembers: data.teamMembers || [],
+      createdBy: data.createdBy || '',
       // Convert Firestore timestamps to Date objects if they exist
-      createdAt: projectDoc.data().createdAt?.toDate() || new Date(),
-      updatedAt: projectDoc.data().updatedAt?.toDate() || new Date(),
+      createdAt: data.createdAt?.toDate() || new Date(),
+      updatedAt: data.updatedAt?.toDate() || new Date(),
     } as Project;
   } catch (error) {
     console.error('Error fetching project:', error);

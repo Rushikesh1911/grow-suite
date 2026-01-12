@@ -97,7 +97,7 @@ export default function ProjectDetailPage() {
           <ProjectOverview project={project} />
           
           {/* Project Tasks */}
-          <ProjectTasks projectId={project.id} />
+          <ProjectTasks projectId={project.id} project={project} />
           
           {/* Project Timeline */}
           <ProjectTimeline project={project} />

@@ -3,10 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, X, Calendar, User, Flag, Target } from 'lucide-react';
 import type { Task, TaskStatus, TaskPriority } from '@/lib/task';
 import { createTask } from '@/lib/task';
@@ -22,7 +20,7 @@ interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onTaskCreated: (task: Task) => void;
-  project: Project;
+  project?: Project;
 }
 
 export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: CreateTaskModalProps) {
@@ -59,6 +57,14 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
     }
   }, [isOpen]);
 
+  // Debug logging
+  console.log('CreateTaskModal render:', { isOpen, project: project?.name });
+
+  // Early return if project is not available or modal is not open - after all hooks
+  if (!project || !project.name || !isOpen) {
+    return null;
+  }
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -84,6 +90,11 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
     
     if (!formData.title.trim()) {
       setError('Task title is required');
+      return;
+    }
+
+    if (!project) {
+      setError('Project information is required');
       return;
     }
 
@@ -137,14 +148,17 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
   ];
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
             <Target className="h-5 w-5" />
             Create New Task
-          </DialogTitle>
-        </DialogHeader>
+          </h2>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Project and Client Info */}
@@ -155,14 +169,14 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
                   <Label className="text-sm font-medium text-muted-foreground">Project</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                    <span className="text-sm font-medium">{project.name}</span>
+                    <span className="text-sm font-medium">{project?.name || 'Loading...'}</span>
                   </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Client</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                    <span className="text-sm font-medium">{project.clientName || 'No Client'}</span>
+                    <span className="text-sm font-medium">{project?.clientName || 'No Client'}</span>
                   </div>
                 </div>
               </div>
@@ -198,38 +212,34 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div className="flex items-center gap-2">
-                          <Badge className={option.color}>{option.label}</Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select 
+                  id="status"
+                  value={formData.status} 
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  className="mt-1 w-full p-2 border rounded-md"
+                >
+                  {statusOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <Label htmlFor="priority">Priority</Label>
-                <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorityOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div className="flex items-center gap-2">
-                          <Badge className={option.color}>{option.label}</Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <select 
+                  id="priority"
+                  value={formData.priority} 
+                  onChange={(e) => handleInputChange('priority', e.target.value)}
+                  className="mt-1 w-full p-2 border rounded-md"
+                >
+                  {priorityOptions.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -313,7 +323,7 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
           )}
 
           {/* Actions */}
-          <DialogFooter>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
             <Button
               type="button"
               variant="outline"
@@ -328,9 +338,9 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
             >
               {isSubmitting ? 'Creating...' : 'Create Task'}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
