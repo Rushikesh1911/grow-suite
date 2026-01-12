@@ -91,7 +91,7 @@ export const createTaskFromTemplate = async (
   });
 };
 
-// Predefined task templates
+// Predefined task templates  [this is kept for showcaase kept if there is error i will show this as a sample (;)]
 export const TASK_TEMPLATES = {
   'website-redesign': {
     title: 'Homepage Design',

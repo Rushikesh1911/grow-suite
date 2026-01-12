@@ -136,20 +136,94 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
   };
 
   const priorityOptions = [
-    { value: 'low', label: 'Low', color: 'bg-gray-100 text-gray-800' },
-    { value: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'high', label: 'High', color: 'bg-red-100 text-red-800' },
+    { 
+      value: 'low', 
+      label: 'Low', 
+      color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+      dotColor: 'bg-green-500',
+    },
+    { 
+      value: 'medium', 
+      label: 'Medium', 
+      color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+      dotColor: 'bg-yellow-500',
+    },
+    { 
+      value: 'high', 
+      label: 'High', 
+      color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+      dotColor: 'bg-red-500',
+    },
   ];
 
   const statusOptions = [
-    { value: 'todo', label: 'To Do', color: 'bg-gray-100 text-gray-800' },
-    { value: 'in-progress', label: 'In Progress', color: 'bg-blue-100 text-blue-800' },
-    { value: 'done', label: 'Done', color: 'bg-green-100 text-green-800' },
+    { 
+      value: 'todo', 
+      label: 'To Do', 
+      color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+      dotColor: 'bg-gray-500',
+    },
+    { 
+      value: 'in-progress', 
+      label: 'In Progress', 
+      color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+      dotColor: 'bg-blue-500',
+    },
+    { 
+      value: 'done', 
+      label: 'Done', 
+      color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+      dotColor: 'bg-green-500',
+    },
   ];
+  
+  const SelectOption = ({ 
+    value, 
+    label, 
+    dotColor, 
+    isSelected, 
+    onClick 
+  }: { 
+    value: string; 
+    label: string; 
+    dotColor: string; 
+    isSelected: boolean; 
+    onClick: () => void 
+  }) => (
+    <div 
+      onClick={onClick}
+      className={`relative flex items-center gap-3 px-4 py-2.5 rounded-lg cursor-pointer transition-all duration-200 ${
+        isSelected 
+          ? 'bg-primary/5 dark:bg-primary/10 border border-primary/20 shadow-sm' 
+          : 'hover:bg-muted/30 border border-transparent hover:border-muted-foreground/10'
+      }`}
+    >
+      <div className={`h-2.5 w-2.5 rounded-full ${dotColor} flex-shrink-0`}></div>
+      <span className="text-sm font-medium">{label}</span>
+      {isSelected && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary"></div>
+      )}
+    </div>
+  );
+  
+  const SelectGroup = ({ 
+    label, 
+    children 
+  }: { 
+    label: string; 
+    children: React.ReactNode 
+  }) => (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium text-muted-foreground">{label}</Label>
+      <div className="space-y-2">
+        {children}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 dark:bg-background/80">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold flex items-center gap-2">
             <Target className="h-5 w-5" />
@@ -162,18 +236,18 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Project and Client Info */}
-          <Card className="bg-muted/30">
+          <Card className="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600">
             <CardContent className="pt-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Project</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-300">Project</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                     <span className="text-sm font-medium">{project?.name || 'Loading...'}</span>
                   </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Client</Label>
+                  <Label className="text-sm font-medium text-gray-600 dark:text-gray-300">Client</Label>
                   <div className="flex items-center gap-2 mt-1">
                     <div className="h-2 w-2 rounded-full bg-green-500"></div>
                     <span className="text-sm font-medium">{project?.clientName || 'No Client'}</span>
@@ -210,37 +284,35 @@ export function CreateTaskModal({ isOpen, onClose, onTaskCreated, project }: Cre
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="status">Status</Label>
-                <select 
-                  id="status"
-                  value={formData.status} 
-                  onChange={(e) => handleInputChange('status', e.target.value)}
-                  className="mt-1 w-full p-2 border rounded-md"
-                >
-                  {statusOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
+              <SelectGroup label="Status">
+                <div className="space-y-2 p-1.5 bg-muted/20 dark:bg-gray-800/50 rounded-lg">
+                  {statusOptions.map((option) => (
+                    <SelectOption
+                      key={option.value}
+                      value={option.value}
+                      label={option.label}
+                      dotColor={option.dotColor}
+                      isSelected={formData.status === option.value}
+                      onClick={() => handleInputChange('status', option.value as TaskStatus)}
+                    />
                   ))}
-                </select>
-              </div>
+                </div>
+              </SelectGroup>
 
-              <div>
-                <Label htmlFor="priority">Priority</Label>
-                <select 
-                  id="priority"
-                  value={formData.priority} 
-                  onChange={(e) => handleInputChange('priority', e.target.value)}
-                  className="mt-1 w-full p-2 border rounded-md"
-                >
-                  {priorityOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
+              <SelectGroup label="Priority">
+                <div className="space-y-2 p-1.5 bg-muted/20 dark:bg-gray-800/50 rounded-lg">
+                  {priorityOptions.map((option) => (
+                    <SelectOption
+                      key={option.value}
+                      value={option.value}
+                      label={option.label}
+                      dotColor={option.dotColor}
+                      isSelected={formData.priority === option.value}
+                      onClick={() => handleInputChange('priority', option.value as TaskPriority)}
+                    />
                   ))}
-                </select>
-              </div>
+                </div>
+              </SelectGroup>
 
               <div>
                 <Label htmlFor="dueDate">Due Date</Label>
